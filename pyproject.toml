@@ -1,0 +1,22 @@
+[project]
+name = "pyrobots"
+version = "0.1.0"
+description = "A series of helpful routines for the Sapienza Robotics exam A.Y 2023-2024"
+authors = [
+    {name = "dario-loi", email = "loi.1940849@studenti.uniroma1.it"},
+]
+dependencies = [
+    "typer[all]>=0.9.0",
+    "numpy>=1.25.2",
+    "pytest>=7.4.2",
+    "black>=23.9.1",
+    "mypy>=1.6.0",
+    "sympy>=1.12",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
