@@ -2,22 +2,29 @@
 
 import typer
 from enum import Enum
-from typing import Optional, Union, Tuple, Type, List, Annotated, Any
+from typing import Optional, Union, Tuple, Type, List, Annotated, Any, Callable
 import pyrobots as pr
 from rich import print
-from sympy import Matrix, sympify
+from sympy import Matrix, sympify, nsimplify
+from fractions import Fraction
 import numpy as np
 
-app = typer.Typer(help="Robotics toolbox for Python.\n\nMathematical expressions such as sqrt(2) or pi are supported and will be evaluated whenever a number is to be inserted", no_args_is_help=True)
+app = typer.Typer(
+    help="Robotics toolbox for Python.\n\nMathematical expressions such as sqrt(2) or pi are supported and will be evaluated whenever a number is to be inserted",
+    no_args_is_help=True,
+)
+
 
 class RotProblemType(Enum):
     DIRECT = "direct"
     INVERSE = "inverse"
-    
+
 
 Expression = Annotated[str, typer.Argument(..., help="Numerical expression.")]
 Axis = Annotated[str, typer.Argument(..., help="Rotation axis.")]
 NDarray = Annotated[str, typer.Argument(..., help="Numerical ndarray.")]
+Float = Union[float, np.float_]
+
 
 def eval_expr(expr: Expression) -> float:
     try:
@@ -25,10 +32,9 @@ def eval_expr(expr: Expression) -> float:
         return val
     except:
         raise typer.BadParameter("Provided input is not a valid expression.")
-    
+
 
 def parse_axis(axis_str: Axis) -> np.ndarray:
-    
     match axis_str:
         case "x":
             return np.array([1, 0, 0])
@@ -42,71 +48,154 @@ def parse_axis(axis_str: Axis) -> np.ndarray:
                 return np.array(values).astype(np.float64)
             except ValueError:
                 raise typer.BadParameter("Provided input is not a valid axis.")
-        
+
+
 def parse_ndarray(input_str: NDarray) -> np.ndarray:
     try:
         values = Matrix(sympify(input_str))
         return np.array(values).astype(np.float64)
     except ValueError:
         raise typer.BadParameter("Provided input is not a valid ndarray.")
-    
-def mat_3d_commas(ndarr_str : np.ndarray) -> str:
-    # Reimplement formatting to get commas in the right place
-    
-    arr_s = repr(ndarr_str)
-    arr_s = arr_s.lstrip("array(").rstrip(")")
-    arr_s = [line.strip() for line in arr_s.split("\n")]
-    arr_s[1] = " " + arr_s[1]
-    arr_s[2] = " " + arr_s[2]
-    arr_s = "\n".join(arr_s)
-    return arr_s
+
+
+def format_known_or(x: Float) -> str:
+    # Some masterful code right here
+
+    prefix = ""
+    if x < 0:
+        prefix = "-"
+
+    if np.isclose(np.abs(x), np.pi):
+        return prefix + "π"
+    elif np.isclose(np.abs(x), np.pi / 2):
+        return prefix + "π/2"
+    elif np.isclose(np.abs(x), np.pi / 4):
+        return prefix + "π/4"
+    elif np.isclose(np.abs(x), np.pi / 3):
+        return prefix + "π/3"
+    elif np.isclose(np.abs(x), np.sqrt(2)):
+        return prefix + "√2"
+    elif np.isclose(np.abs(x), 1 / np.sqrt(2)):
+        return prefix + "1/√2"
+    elif np.isclose(np.abs(x), np.sqrt(3)):
+        return prefix + "√3"
+    else:
+        return str(Fraction(float(x)).limit_denominator())
+
 
 @app.command()
-def rotation_interactive():
+def rotation_interactive(
+    fract: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Use fractions instead of decimals.",
+            show_default=False,
+        ),
+    ] = False
+) -> None:
     """
-        Interactive interface to solve rotation problems.
+    Interactive interface to solve rotation problems.
     """
-    
-    problem_type: str = typer.prompt("What class of problem do you want to solve? [direct,inverse]", type=str)
-    problem_type = RotProblemType(problem_type.strip().lower())
-    
+
+    problem_str: str = typer.prompt(
+        "What class of problem do you want to solve? [direct,inverse]", type=str
+    )
+    problem_type = RotProblemType(problem_str.strip().lower())
+
     match problem_type:
         case RotProblemType.DIRECT:
-            theta: Expression = typer.prompt("Rotation angle (in radians):", type=Expression, default=0)
-            axis_str: Expression = typer.prompt("Rotation axis (Either a list or x,y or z for a unit axis):", default="1,0,0")
-            theta = eval_expr(theta)
+            theta_str: Expression = typer.prompt(
+                "Rotation angle (in radians):", type=Expression, default=0
+            )
+            axis_str: Expression = typer.prompt(
+                "Rotation axis (Either a list or x,y or z for a unit axis):",
+                default="1,0,0",
+            )
+            theta: float = eval_expr(theta_str)
             axis: np.ndarray = parse_axis(axis_str)
-            print(f"Direct Rotation Matrix:\n{mat_3d_commas(pr.rotations.direct_rot_mat(theta, axis))}")
+
+            R = pr.rotations.direct_rot_mat(theta, axis)
+
+            if fract:
+                R = np.array2string(
+                    R,
+                    separator=", ",
+                    suppress_small=True,
+                    formatter={"float": lambda x: format_known_or(x)},
+                )
+            else:
+                R = np.array2string(R, separator=", ")
+
+            print(f"Direct Rotation Matrix:\n{R}")
 
         case RotProblemType.INVERSE:
-            R_str: Expression = typer.prompt("Rotation matrix (in the form [[a, b, c], [d, e, f], [g, h, i]]):", default="[[1,0,0],[0,1,0],[0,0,1]]")
-            R: np.ndarray = parse_ndarray(R_str)
-            theta, axis = pr.rotations.inverse_rot_mat(R)
-            print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis}")
-            
+            R_str: Expression = typer.prompt(
+                "Rotation matrix (in the form [[a, b, c], [d, e, f], [g, h, i]]):",
+                default="[[1,0,0],[0,1,0],[0,0,1]]",
+            )
+            R_out: np.ndarray = parse_ndarray(R_str)
+            theta, axis = pr.rotations.inverse_rot_mat(R_out)
+            axis_fmt: str = (
+                np.array2string(axis, separator=", ")
+                if isinstance(axis, np.ndarray)
+                else "Undefined"
+            )
+            print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis_fmt}")
+
+
 @app.command()
-def rotation_direct(theta: Expression, axis: Axis):
+def rotation_direct(
+    theta: Expression,
+    axis: Axis,
+    fract: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Use fractions instead of decimals.",
+            show_default=False,
+        ),
+    ] = False,
+) -> None:
     """
-        Direct rotation problem.
+    Direct rotation problem.
     """
-    
+
     parsed_axis: np.ndarray = parse_axis(axis)
     parsed_theta: float = eval_expr(theta)
-    R = mat_3d_commas(pr.rotations.direct_rot_mat(parsed_theta, parsed_axis))
-    print(f"Direct Rotation Matrix:\n{R}")
+    R = pr.rotations.direct_rot_mat(parsed_theta, parsed_axis)
+    if fract:
+        R = np.array2string(
+            R,
+            separator=", ",
+            suppress_small=True,
+            formatter={"float": lambda x: format_known_or(x)},
+        )
+    else:
+        R = np.array2string(R, separator=", ")
+    print(f"Direct Rotation Matrix:")
+    print(R)
 
-    
+
 @app.command()
 def rotation_inverse(r_matrix: NDarray):
     """
-        Inverse rotation problem.
+    Inverse rotation problem.
     """
     parsed_R: np.ndarray = parse_ndarray(r_matrix)
     theta, axis = pr.rotations.inverse_rot_mat(parsed_R)
-    if not isinstance(axis, np.ndarray):
-        axis = "Undefined"
-    
+    axis = (
+        np.array2string(axis, separator=", ")
+        if isinstance(axis, np.ndarray)
+        else "Undefined"
+    )
+
     print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis}")
+
 
 if __name__ == "__main__":
     app()
