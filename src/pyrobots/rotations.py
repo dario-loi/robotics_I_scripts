@@ -24,6 +24,10 @@ def direct_rot_mat(theta: float, axis: np.ndarray) -> np.ndarray:
     np.ndarray
         Rotation matrix.
     """
+    
+    assert axis is not None, "Axis cannot be None"
+    assert axis.shape == (3,), "Axis must be a 3D vector"
+    assert not np.isclose(np.linalg.norm(axis), 0), "Axis should not be singular"
 
     axis = axis / np.linalg.norm(axis)
     ux, uy, uz = axis
@@ -67,6 +71,12 @@ def inverse_rot_mat(
     Tuple[Union[float, Tuple[float, float]], Optional[Vec3]]
         Rotation angle in radians and rotation axis, the first can have either one or two values, the latter is None (undefined) if the angle is 0.
     """
+    
+    assert R is not None, "R cannot be None"
+    assert R.shape == (3, 3), "R must be a 3x3 matrix"
+    assert np.isclose(np.linalg.det(R), 1), "R must be a rotation matrix (orthonomal with determinant 1)"
+    assert np.dot(R, R.T).all() == np.eye(3).all(), "R must be a rotation matrix (orthonomal with determinant 1)"
+    
 
     s = (
         1

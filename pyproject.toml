@@ -13,6 +13,9 @@ dependencies = [
     "mypy>=1.6.0",
     "sympy>=1.12",
     "pytest-cov>=4.1.0",
+    "hypothesis>=6.87.4",
+    "pytest-mypy>=0.10.3",
+    "pytest-black>=0.3.12",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
