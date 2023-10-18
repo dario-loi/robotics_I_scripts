@@ -6,6 +6,7 @@ import pytest
 
 from rich import print
 
+
 def test_direct() -> None:
     assert rot.direct_rot_mat(0, np.array([1, 0, 0])).all() == np.eye(3).all()
     assert (
@@ -41,7 +42,7 @@ def test_compose_should_be_identity() -> None:
 
     # Special case (theta = +- pi)
 
-    R = rot.direct_rot_mat(-np.pi,np.array([1, 0, 0]))
+    R = rot.direct_rot_mat(-np.pi, np.array([1, 0, 0]))
     theta, axis = rot.inverse_rot_mat(R)
 
     assert np.isclose(theta, np.array([-np.pi, np.pi])).all()
@@ -70,26 +71,28 @@ def test_axis_scale_invariant() -> None:
 
     assert np.allclose(R_1, R_2)
 
+
 def test_huge_axis():
     axis = np.array([1e15, 1e15, -1e15])
-    
+
     R = rot.direct_rot_mat(2 * np.pi, axis)
 
     assert np.allclose(R, np.eye(3))
-    
+
+
 def test_huge_angle():
     # angles break down close to 1e8
     R = rot.direct_rot_mat(2 * np.pi * 1e7, np.array([0, 0, 1]))
 
     assert np.allclose(R, np.eye(3))
-    
+
+
 def test_huge_angle_and_axis() -> None:
     axis = np.array([1e15, 1e15, -1e15])
-    
+
     R = rot.direct_rot_mat(2 * np.pi * 1e7, axis)
 
     assert np.allclose(R, np.eye(3))
-    
 
 
 @pytest.mark.xfail
@@ -97,47 +100,47 @@ def test_singular_axis() -> None:
     R = rot.direct_rot_mat(np.pi, np.array([0, 0, 0]))
 
     assert np.allclose(R, np.eye(3))
-    
+
+
 @pytest.mark.xfail
 def test_huge_matrix():
-    
-    mat = np.array([
-        [32, 44, 55],
-        [12, 23, 34],
-        [0, 0, 0]
-    ])
-    
+    mat = np.array([[32, 44, 55], [12, 23, 34], [0, 0, 0]])
+
     R = rot.direct_rot_mat(np.pi, mat)
 
     assert np.allclose(R, np.eye(3))
-    
+
+
 def test_roll_pitch_yaw_identity() -> None:
-    
     R = rot.direct_rpy(0, 0, 0)
     assert np.allclose(R, np.eye(3))
-    
+
+
 def test_roll_pitch_yaw_single() -> None:
-    
     R = rot.direct_rpy(np.pi, 0, 0)
     R_expected = rot.direct_rot_mat(np.pi, np.array([1, 0, 0]))
-    
+
     assert np.allclose(R, R_expected)
-    
+
+
 def test_roll_pitch_yaw_multiple() -> None:
-    
     R = rot.direct_rpy(np.pi, np.pi, np.pi)
-    R_expected = rot.direct_rot_mat(np.pi, np.array([1, 0, 0])) @ rot.direct_rot_mat(np.pi, np.array([0, 1, 0])) @ rot.direct_rot_mat(np.pi, np.array([0, 0, 1]))
-    
+    R_expected = (
+        rot.direct_rot_mat(np.pi, np.array([1, 0, 0]))
+        @ rot.direct_rot_mat(np.pi, np.array([0, 1, 0]))
+        @ rot.direct_rot_mat(np.pi, np.array([0, 0, 1]))
+    )
+
     assert np.allclose(R, R_expected)
-    
+
+
 def test_roll_pitch_yaw_separate() -> None:
-    
     R_roll, R_pitch, R_yaw = rot.direct_rpy_separate(np.pi, np.pi, np.pi)
-    
+
     R_expected_roll = rot.direct_rot_mat(np.pi, np.array([1, 0, 0]))
     R_expected_pitch = rot.direct_rot_mat(np.pi, np.array([0, 1, 0]))
     R_expected_yaw = rot.direct_rot_mat(np.pi, np.array([0, 0, 1]))
-    
+
     assert np.allclose(R_roll, R_expected_roll)
     assert np.allclose(R_pitch, R_expected_pitch)
     assert np.allclose(R_yaw, R_expected_yaw)

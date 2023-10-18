@@ -10,7 +10,7 @@ from fractions import Fraction
 import numpy as np
 
 app = typer.Typer(
-    help="Robotics toolbox for Python.\n\nMathematical expressions such as sqrt(2) or pi are supported and will be evaluated whenever a number is to be inserted",
+    help="Robotics toolbox for Python.\n\nMathematical expressions such as sqrt(2) or pi are supported and will be evaluated whenever a number is to be inserted\n\nIf you need to solve for complex problems, import the library in a notebook and DYI!",
     no_args_is_help=True,
 )
 
@@ -195,7 +195,8 @@ def rotation_inverse(r_matrix: NDarray):
     )
 
     print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis}")
-    
+
+
 @app.command()
 def rpy_direct(
     roll: Expression,
@@ -229,9 +230,11 @@ def rpy_direct(
     parsed_roll: float = eval_expr(roll)
     parsed_pitch: float = eval_expr(pitch)
     parsed_yaw: float = eval_expr(yaw)
-    
+
     if separate:
-        R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(parsed_roll, parsed_pitch, parsed_yaw)
+        R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(
+            parsed_roll, parsed_pitch, parsed_yaw
+        )
         if fract:
             R_roll = np.array2string(
                 R_roll,
@@ -272,8 +275,6 @@ def rpy_direct(
             R = np.array2string(R, separator=", ")
         print(f"Direct Rotation Matrix:")
         print(R)
-    
-
 
 
 if __name__ == "__main__":
