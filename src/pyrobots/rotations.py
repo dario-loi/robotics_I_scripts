@@ -111,6 +111,64 @@ def inverse_rot_mat(
         )
         return theta, r
 
+def direct_rpy(
+    roll: float, pitch: float, yaw: float
+) -> np.ndarray:
+    """
+    This function returns a rotation matrix for a given roll, pitch and yaw.
+
+    Parameters
+    ----------
+    roll : float
+        Roll angle in radians.
+    pitch : float
+        Pitch angle in radians.
+    yaw : float
+        Yaw angle in radians.
+
+    Returns
+    -------
+    np.ndarray
+        Rotation matrix.
+    """
+    
+    assert roll is not None, "Roll cannot be None"
+    assert pitch is not None, "Pitch cannot be None"
+    assert yaw is not None, "Yaw cannot be None"
+
+    return direct_rot_mat(roll, np.array([1, 0, 0])) @ direct_rot_mat(
+        pitch, np.array([0, 1, 0])
+    ) @ direct_rot_mat(yaw, np.array([0, 0, 1]))
+
+def direct_rpy_separate(
+    roll: float, pitch: float, yaw: float
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    This function returns a rotation matrix for a given roll, pitch and yaw.
+
+    Parameters
+    ----------
+    roll : float
+        Roll angle in radians.
+    pitch : float
+        Pitch angle in radians.
+    yaw : float
+        Yaw angle in radians.
+
+    Returns
+    -------
+    np.ndarray
+        Rotation matrix.
+    """
+    
+    assert roll is not None, "Roll cannot be None"
+    assert pitch is not None, "Pitch cannot be None"
+    assert yaw is not None, "Yaw cannot be None"
+
+    R_roll = direct_rot_mat(roll, np.array([1, 0, 0]))
+    R_pitch = direct_rot_mat(pitch, np.array([0, 1, 0]))
+    R_yaw = direct_rot_mat(yaw, np.array([0, 0, 1]))
+    return R_roll, R_pitch, R_yaw
 
 if __name__ == "__main__":
     inverse_rot_mat(

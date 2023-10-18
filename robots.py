@@ -195,6 +195,85 @@ def rotation_inverse(r_matrix: NDarray):
     )
 
     print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis}")
+    
+@app.command()
+def rpy_direct(
+    roll: Expression,
+    pitch: Expression,
+    yaw: Expression,
+    fract: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Use fractions instead of decimals.",
+            show_default=False,
+        ),
+    ] = False,
+    separate: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--separate",
+            "-s",
+            help="Separate the rotation matrix into roll, pitch and yaw.",
+            show_default=False,
+        ),
+    ] = False,
+) -> None:
+    """
+    Direct rotation problem.
+    """
+
+    parsed_roll: float = eval_expr(roll)
+    parsed_pitch: float = eval_expr(pitch)
+    parsed_yaw: float = eval_expr(yaw)
+    
+    if separate:
+        R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(parsed_roll, parsed_pitch, parsed_yaw)
+        if fract:
+            R_roll = np.array2string(
+                R_roll,
+                separator=", ",
+                suppress_small=True,
+                formatter={"float": lambda x: format_known_or(x)},
+            )
+            R_pitch = np.array2string(
+                R_pitch,
+                separator=", ",
+                suppress_small=True,
+                formatter={"float": lambda x: format_known_or(x)},
+            )
+            R_yaw = np.array2string(
+                R_yaw,
+                separator=", ",
+                suppress_small=True,
+                formatter={"float": lambda x: format_known_or(x)},
+            )
+        else:
+            R_roll = np.array2string(R_roll, separator=", ")
+            R_pitch = np.array2string(R_pitch, separator=", ")
+            R_yaw = np.array2string(R_yaw, separator=", ")
+        print(f"Direct Rotation Matrix:")
+        print(f"Roll:\n{R_roll}")
+        print(f"Pitch:\n{R_pitch}")
+        print(f"Yaw:\n{R_yaw}")
+    else:
+        R = pr.rotations.direct_rpy(parsed_roll, parsed_pitch, parsed_yaw)
+        if fract:
+            R = np.array2string(
+                R,
+                separator=", ",
+                suppress_small=True,
+                formatter={"float": lambda x: format_known_or(x)},
+            )
+        else:
+            R = np.array2string(R, separator=", ")
+        print(f"Direct Rotation Matrix:")
+        print(R)
+    
+
 
 
 if __name__ == "__main__":
