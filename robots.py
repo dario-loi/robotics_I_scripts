@@ -1,12 +1,32 @@
 #!/usr/bin/env python3
 
+"""
+===
+License
+
+Copyright 2023 Dario Loi
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+"""
+
 from enum import Enum
 from fractions import Fraction
 from typing import Annotated, Any, Callable, List, Optional, Tuple, Type, Union
 
 import numpy as np
-from numpy import floating
 import typer
+from numpy import floating
 from rich import print
 from rich.prompt import Prompt
 from sympy import Matrix, nsimplify, sympify
@@ -252,11 +272,11 @@ def rpy_direct(
         R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(
             parsed_roll, parsed_pitch, parsed_yaw
         )
-        
+
         roll_fmt: str
         pitch_fmt: str
         yaw_fmt: str
-        
+
         if fract:
             roll_fmt = np.array2string(
                 R_roll,
@@ -280,7 +300,7 @@ def rpy_direct(
             roll_fmt = np.array2string(R_roll, separator=", ")
             pitch_fmt = np.array2string(R_pitch, separator=", ")
             yaw_fmt = np.array2string(R_yaw, separator=", ")
-            
+
         print(f"Direct Rotation Matrix:")
         print(f":arrow_lower_right: Roll:\n{roll_fmt}")
         print(f":arrow_lower_left: Pitch:\n{pitch_fmt}")

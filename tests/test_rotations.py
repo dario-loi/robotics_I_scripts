@@ -1,3 +1,23 @@
+"""
+===
+License
+
+Copyright 2023 Dario Loi
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+"""
+
 import numpy as np
 import pytest
 from rich import print
@@ -6,7 +26,9 @@ from pyrobots import rotations as rot
 
 
 def test_direct() -> None:
-    assert rot.direct_rot_mat(0, np.array([1, 0, 0])).all() == np.eye(3).all(), "Rotation matrix for 0 radians about x-axis should be identity"
+    assert (
+        rot.direct_rot_mat(0, np.array([1, 0, 0])).all() == np.eye(3).all()
+    ), "Rotation matrix for 0 radians about x-axis should be identity"
     assert (
         rot.direct_rot_mat(np.pi, np.array([1, 0, 0])).all()
         == np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]]).all()
@@ -24,15 +46,16 @@ def test_inverse() -> None:
     # Accessing the first element of the tuple should return the angle, which should have two values
     # we check that the second value is pi
     theta, axis = rot.inverse_rot_mat(np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]]))
-    
-    assert (isinstance(theta, tuple) and len(theta) == 2)
+
+    assert isinstance(theta, tuple) and len(theta) == 2
     t1, t2 = theta
-    
+
     assert axis is not None, "axis should not be None"
     assert np.isclose(t1, -np.pi), "t1 should be -pi"
     assert np.isclose(t2, np.pi), "t2 should be pi"
     assert axis.all() == np.array([1, 0, 0]).all(), "axis should be [1, 0, 0]"
-    assert (t1 == -t2), "t1 and t2 should be negatives of each other"
+    assert t1 == -t2, "t1 and t2 should be negatives of each other"
+
 
 def test_compose_should_be_identity() -> None:
     # General case
@@ -49,7 +72,9 @@ def test_compose_should_be_identity() -> None:
     R = rot.direct_rot_mat(-np.pi, np.array([1, 0, 0]))
     theta, axis = rot.inverse_rot_mat(R)
 
-    assert np.isclose(theta, np.array([-np.pi, np.pi])).all(), "theta should be -pi or pi"
+    assert np.isclose(
+        theta, np.array([-np.pi, np.pi])
+    ).all(), "theta should be -pi or pi"
     assert axis is not None, "axis should not be None"
     assert axis.all() == np.array([1, 0, 0]).all(), "axis should be [1, 0, 0]"
 
@@ -105,7 +130,6 @@ def test_singular_axis() -> None:
     R = rot.direct_rot_mat(np.pi, np.array([0, 0, 0]))
 
     assert np.allclose(R, np.eye(3)), "Rotation matrix should be identity"
-
 
 
 def test_roll_pitch_yaw_identity() -> None:
