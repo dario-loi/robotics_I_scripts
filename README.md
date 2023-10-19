@@ -1,6 +1,23 @@
+
+
 # Robotics I Utilities
 
 This repository contains a collection of utilities for the Robotics I exam at the AI & Robotics master's degree at Sapienza University of Rome.
+
+Table of Contents
+=================
+
+- [Robotics I Utilities](#robotics-i-utilities)
+- [Table of Contents](#table-of-contents)
+  - [What's inside](#whats-inside)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [`robots`](#robots)
+    - [`pyrobots`](#pyrobots)
+  - [Tests](#tests)
+  - [Contributing](#contributing)
+
+<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 
 ## What's inside
 
@@ -16,7 +33,7 @@ Once you have `pdm` installed, you can clone this repository and install the dep
 ```bash
 git clone
 cd robotics_I_scripts
-pdm install
+pdm install && pdm run pre-commit install
 ```
 
 This project is distributed through this repository, so remember to `git pull` once in a while to get the latest version.
