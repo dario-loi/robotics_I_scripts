@@ -45,7 +45,6 @@ If you want to be of help to this project but you don't want to touch the applic
 
 ## Contributing
 
-This project is Open Source Software and is coded by students for students. 
+This project is Open Source Software and is coded by students for students.
 
 If you use the script, I only ask you to please report any bugs on the repository's [issue tracker](https://github.com/dario-loi/robotics_I_scripts/issues), if you want to contribute to the project, do not hesitate to open a pull request!
-

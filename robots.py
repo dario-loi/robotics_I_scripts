@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
-import typer
 from enum import Enum
-from typing import Optional, Union, Tuple, Type, List, Annotated, Any, Callable
-import pyrobots as pr
-from rich import print
-from sympy import Matrix, sympify, nsimplify
 from fractions import Fraction
+from typing import Annotated, Any, Callable, List, Optional, Tuple, Type, Union
+
 import numpy as np
+from numpy import floating
+import typer
+from rich import print
+from rich.prompt import Prompt
+from sympy import Matrix, nsimplify, sympify
+
+import pyrobots as pr
 
 app = typer.Typer(
     help="Robotics toolbox for Python.\n\nMathematical expressions such as sqrt(2) or pi are supported and will be evaluated whenever a number is to be inserted\n\nIf you need to solve for complex problems, import the library in a notebook and DYI!",
@@ -58,29 +62,37 @@ def parse_ndarray(input_str: NDarray) -> np.ndarray:
         raise typer.BadParameter("Provided input is not a valid ndarray.")
 
 
-def format_known_or(x: Float) -> str:
-    # Some masterful code right here
+def format_known_or(x: floating[Any]) -> str:
+    def is_close_to(value, reference, tolerance=1e-10):
+        return np.isclose(np.abs(value), reference, atol=tolerance)
 
-    prefix = ""
-    if x < 0:
-        prefix = "-"
+    def format_special_case(value, symbol):
+        return f"{prefix}{symbol}"
 
-    if np.isclose(np.abs(x), np.pi):
-        return prefix + "π"
-    elif np.isclose(np.abs(x), np.pi / 2):
-        return prefix + "π/2"
-    elif np.isclose(np.abs(x), np.pi / 4):
-        return prefix + "π/4"
-    elif np.isclose(np.abs(x), np.pi / 3):
-        return prefix + "π/3"
-    elif np.isclose(np.abs(x), np.sqrt(2)):
-        return prefix + "√2"
-    elif np.isclose(np.abs(x), 1 / np.sqrt(2)):
-        return prefix + "1/√2"
-    elif np.isclose(np.abs(x), np.sqrt(3)):
-        return prefix + "√3"
-    else:
-        return str(Fraction(float(x)).limit_denominator())
+    prefix = "-" if x < 0 else ""
+
+    special_cases = {
+        np.pi: "π",
+        np.pi / 2: "π/2",
+        np.pi / 4: "π/4",
+        np.pi / 3: "π/3",
+        np.sqrt(2): "√2",
+        1 / np.sqrt(2): "1/√2",
+        np.sqrt(3): "√3",
+        1 / np.sqrt(3): "1/√3",
+        np.e: "e",
+        2 * np.pi: "2π",
+        np.pi / 6: "π/6",
+        np.sqrt(5): "√5",
+        1 / np.sqrt(5): "1/√5",
+        np.log(10): "ln(10)",
+        np.log(2): "ln(2)",
+    }
+
+    for reference, symbol in special_cases.items():
+        if is_close_to(x, reference):
+            return format_special_case(x, symbol)
+    return str(Fraction(float(x)).limit_denominator())
 
 
 @app.command()
@@ -100,50 +112,53 @@ def rotation_interactive(
     Interactive interface to solve rotation problems.
     """
 
-    problem_str: str = typer.prompt(
-        "What class of problem do you want to solve? [direct,inverse]", type=str
+    problem_str: str = Prompt.ask(
+        ":thinking_face: What class of problem do you want to solve? (direct,inverse)",
     )
     problem_type = RotProblemType(problem_str.strip().lower())
+    R_str: str
 
     match problem_type:
         case RotProblemType.DIRECT:
-            theta_str: Expression = typer.prompt(
-                "Rotation angle (in radians):", type=Expression, default=0
+            theta_str: Expression = Prompt.ask(
+                ":triangular_ruler: Rotation angle (in radians)", default="0"
             )
-            axis_str: Expression = typer.prompt(
-                "Rotation axis (Either a list or x,y or z for a unit axis):",
-                default="1,0,0",
+            axis_str: Expression = Prompt.ask(
+                ":straight_ruler: Rotation axis (Either a list or x,y or z for a unit axis)",
+                default="[1,0,0]",
             )
-            theta: float = eval_expr(theta_str)
-            axis: np.ndarray = parse_axis(axis_str)
+            theta = eval_expr(theta_str)
+            axis = parse_axis(axis_str)
 
             R = pr.rotations.direct_rot_mat(theta, axis)
 
             if fract:
-                R = np.array2string(
+                R_str = np.array2string(
                     R,
                     separator=", ",
                     suppress_small=True,
                     formatter={"float": lambda x: format_known_or(x)},
                 )
             else:
-                R = np.array2string(R, separator=", ")
+                R_str = np.array2string(R, separator=", ")
 
-            print(f"Direct Rotation Matrix:\n{R}")
+            print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_str}")
 
         case RotProblemType.INVERSE:
-            R_str: Expression = typer.prompt(
-                "Rotation matrix (in the form [[a, b, c], [d, e, f], [g, h, i]]):",
+            R_in: Expression = Prompt.ask(
+                ":arrows_counterclockwise: Rotation matrix (in the form [[a, b, c], [d, e, f], [g, h, i]]):",
                 default="[[1,0,0],[0,1,0],[0,0,1]]",
             )
-            R_out: np.ndarray = parse_ndarray(R_str)
-            theta, axis = pr.rotations.inverse_rot_mat(R_out)
-            axis_fmt: str = (
-                np.array2string(axis, separator=", ")
-                if isinstance(axis, np.ndarray)
+            R_out = parse_ndarray(R_in)
+            theta_out, axis_out = pr.rotations.inverse_rot_mat(R_out)
+            axis_fmt = (
+                np.array2string(axis_out, separator=", ")
+                if isinstance(axis_out, np.ndarray)
                 else "Undefined"
             )
-            print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis_fmt}")
+            print(
+                f"Inverse Rotation:\n:triangular_ruler: theta = {theta_out}\n:straight_ruler: axis = {axis_fmt}"
+            )
 
 
 @app.command()
@@ -168,17 +183,17 @@ def rotation_direct(
     parsed_axis: np.ndarray = parse_axis(axis)
     parsed_theta: float = eval_expr(theta)
     R = pr.rotations.direct_rot_mat(parsed_theta, parsed_axis)
+    R_str: str
     if fract:
-        R = np.array2string(
+        R_str = np.array2string(
             R,
             separator=", ",
             suppress_small=True,
             formatter={"float": lambda x: format_known_or(x)},
         )
     else:
-        R = np.array2string(R, separator=", ")
-    print(f"Direct Rotation Matrix:")
-    print(R)
+        R_str = np.array2string(R, separator=", ")
+    print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_str}")
 
 
 @app.command()
@@ -188,13 +203,15 @@ def rotation_inverse(r_matrix: NDarray):
     """
     parsed_R: np.ndarray = parse_ndarray(r_matrix)
     theta, axis = pr.rotations.inverse_rot_mat(parsed_R)
-    axis = (
+    axis_fmt = (
         np.array2string(axis, separator=", ")
         if isinstance(axis, np.ndarray)
         else "Undefined"
     )
 
-    print(f"Inverse Rotation:\ntheta = {theta}\naxis = {axis}")
+    print(
+        f"Inverse Rotation:\n:triangular_ruler: theta = {theta}\n:straight_ruler: axis = {axis_fmt}"
+    )
 
 
 @app.command()
@@ -235,46 +252,52 @@ def rpy_direct(
         R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(
             parsed_roll, parsed_pitch, parsed_yaw
         )
+        
+        roll_fmt: str
+        pitch_fmt: str
+        yaw_fmt: str
+        
         if fract:
-            R_roll = np.array2string(
+            roll_fmt = np.array2string(
                 R_roll,
                 separator=", ",
                 suppress_small=True,
                 formatter={"float": lambda x: format_known_or(x)},
             )
-            R_pitch = np.array2string(
+            pitch_fmt = np.array2string(
                 R_pitch,
                 separator=", ",
                 suppress_small=True,
                 formatter={"float": lambda x: format_known_or(x)},
             )
-            R_yaw = np.array2string(
+            yaw_fmt = np.array2string(
                 R_yaw,
                 separator=", ",
                 suppress_small=True,
                 formatter={"float": lambda x: format_known_or(x)},
             )
         else:
-            R_roll = np.array2string(R_roll, separator=", ")
-            R_pitch = np.array2string(R_pitch, separator=", ")
-            R_yaw = np.array2string(R_yaw, separator=", ")
+            roll_fmt = np.array2string(R_roll, separator=", ")
+            pitch_fmt = np.array2string(R_pitch, separator=", ")
+            yaw_fmt = np.array2string(R_yaw, separator=", ")
+            
         print(f"Direct Rotation Matrix:")
-        print(f"Roll:\n{R_roll}")
-        print(f"Pitch:\n{R_pitch}")
-        print(f"Yaw:\n{R_yaw}")
+        print(f":arrow_lower_right: Roll:\n{roll_fmt}")
+        print(f":arrow_lower_left: Pitch:\n{pitch_fmt}")
+        print(f":arrow_up: Yaw:\n{yaw_fmt}")
     else:
         R = pr.rotations.direct_rpy(parsed_roll, parsed_pitch, parsed_yaw)
+        R_fmt: str
         if fract:
-            R = np.array2string(
+            R_fmt = np.array2string(
                 R,
                 separator=", ",
                 suppress_small=True,
                 formatter={"float": lambda x: format_known_or(x)},
             )
         else:
-            R = np.array2string(R, separator=", ")
-        print(f"Direct Rotation Matrix:")
-        print(R)
+            R_fmt = np.array2string(R, separator=", ")
+        print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_fmt}")
 
 
 if __name__ == "__main__":

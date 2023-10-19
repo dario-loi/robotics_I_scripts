@@ -1,0 +1,35 @@
+# Runs on EACH commit, makes sure that formatting and stuff is correct
+# Tests are run on CI, so we don't need to run them here
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-json
+    -   id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        language: system
+        files: .*.py
+        entry: pdm run isort
+        types: [python]
+        args: [--profile black]
+      - id: black # run on all files (passes some twice, but that's fine)
+        name: black
+        files: .*.py
+        language: system
+        entry: pdm run black .
+        types: [python]
+
+      - id: mypy
+        name: mypy
+        language: system # run on src and tests
+        files: ^src/.*\.py$ ^tests/.*\.py$
+        entry: pdm run mypy
+        types: [python]
+        args: [--ignore-missing-imports]
