@@ -1,11 +1,12 @@
-""" 
+"""
 This subpackage contains the rotation classes and functions.
 
 It is helpful to calculate direct and inverse problems for Rotations along a given axis.
 """
 
+from typing import Optional, Tuple, Type, Union
+
 import numpy as np
-from typing import Type, Tuple, Optional, Union
 
 
 def direct_rot_mat(theta: float, axis: np.ndarray) -> np.ndarray:
