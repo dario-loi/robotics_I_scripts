@@ -23,6 +23,7 @@ limitations under the License.
 """
 
 from typing import Optional, Tuple, Type, Union
+from enum import Enum
 
 import numpy as np
 
@@ -44,8 +45,10 @@ def direct_rot_mat(theta: float, axis: np.ndarray) -> np.ndarray:
         Rotation matrix.
     """
 
+    axis = axis.squeeze()
+
     assert axis is not None, "Axis cannot be None"
-    assert axis.shape == (3,), "Axis must be a 3D vector"
+    assert axis.shape == (3,), f"Axis must be a 3D vector, shape is {axis.shape}"
     assert not np.isclose(np.linalg.norm(axis), 0), "Axis should not be singular"
 
     axis = axis / np.linalg.norm(axis)
@@ -95,10 +98,10 @@ def inverse_rot_mat(
     assert R.shape == (3, 3), "R must be a 3x3 matrix"
     assert np.isclose(
         np.linalg.det(R), 1
-    ), "R must be a rotation matrix (orthonomal with determinant 1)"
-    assert (
-        np.dot(R, R.T).all() == np.eye(3).all()
-    ), "R must be a rotation matrix (orthonomal with determinant 1)"
+    ), f"R must be a rotation matrix (orthonomal with determinant 1), determinant is {np.linalg.det(R)}"
+    assert np.allclose(
+        np.dot(R.T, R), np.eye(3)
+    ), f"R must be a rotation matrix (orthonomal with determinant 1), R^T @ R != I"
 
     s = (
         1
@@ -134,36 +137,6 @@ def inverse_rot_mat(
         return theta, r
 
 
-def direct_rpy(roll: float, pitch: float, yaw: float) -> np.ndarray:
-    """
-    This function returns a rotation matrix for a given roll, pitch and yaw.
-
-    Parameters
-    ----------
-    roll : float
-        Roll angle in radians.
-    pitch : float
-        Pitch angle in radians.
-    yaw : float
-        Yaw angle in radians.
-
-    Returns
-    -------
-    np.ndarray
-        Rotation matrix.
-    """
-
-    assert roll is not None, "Roll cannot be None"
-    assert pitch is not None, "Pitch cannot be None"
-    assert yaw is not None, "Yaw cannot be None"
-
-    return (
-        direct_rot_mat(roll, np.array([1, 0, 0]))
-        @ direct_rot_mat(pitch, np.array([0, 1, 0]))
-        @ direct_rot_mat(yaw, np.array([0, 0, 1]))
-    )
-
-
 def direct_rpy_separate(
     roll: float, pitch: float, yaw: float
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -193,6 +166,99 @@ def direct_rpy_separate(
     R_pitch = direct_rot_mat(pitch, np.array([0, 1, 0]))
     R_yaw = direct_rot_mat(yaw, np.array([0, 0, 1]))
     return R_roll, R_pitch, R_yaw
+
+
+def direct_rpy(roll: float, pitch: float, yaw: float) -> np.ndarray:
+    """
+    This function returns a rotation matrix for a given roll, pitch and yaw.
+
+    Parameters
+    ----------
+    roll : float
+        Roll angle in radians.
+    pitch : float
+        Pitch angle in radians.
+    yaw : float
+        Yaw angle in radians.
+
+    Returns
+    -------
+    np.ndarray
+        Rotation matrix.
+    """
+
+    assert roll is not None, "Roll cannot be None"
+    assert pitch is not None, "Pitch cannot be None"
+    assert yaw is not None, "Yaw cannot be None"
+
+    mats = direct_rpy_separate(roll, pitch, yaw)
+
+    return mats[2] @ mats[1] @ mats[0]
+
+
+class RPY_RES(Enum):
+    SUM = "phi + psi"
+    SUB = "phi - psi"
+
+
+def inverse_rpy(
+    R: np.ndarray,
+) -> Tuple[float, float, float, Optional[RPY_RES]]:
+    """inverse_rpy Calculates the roll, pitch and yaw angles for a given rotation matrix.
+
+    Parameters
+    ----------
+    R : np.ndarray
+        Rotation matrix.
+
+    Returns
+    -------
+    Tuple[float, float, float, Optional[RPY_RES]]
+        Roll, pitch and yaw angles in radians, with an additional flag to indicate the ambiguity in the solution.
+        Roll and yaw can be subject to constraints if the ambiguity is present, while pitch is always unambiguous.
+
+    """
+
+    assert R is not None, "R cannot be None"
+    assert R.shape == (3, 3), "R must be a 3x3 matrix"
+    assert np.isclose(
+        np.linalg.det(R), 1
+    ), f"R must be a rotation matrix (orthonomal with determinant 1), determinant is {np.linalg.det(R)}"
+    assert np.allclose(
+        np.dot(R.T, R), np.eye(3)
+    ), "R must be a rotation matrix (orthonomal with determinant 1), R^T @ R != I"
+
+    ctet = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
+    pitch = np.arctan2(-R[2, 0], np.sqrt(ctet))
+
+    if not np.isclose(ctet, 0):
+        roll = np.arctan2(R[2, 1] / ctet, R[2, 2] / ctet)
+        yaw = np.arctan2(R[1, 0] / ctet, R[0, 0] / ctet)
+
+        return roll, pitch, yaw, None
+    else:
+        # ambiguity resolution formulas extracted from
+        # https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
+        # (by assuming a free variable to always be 0 and then solving for the others through basic algebra)
+        if np.isclose(pitch, np.pi / 2):
+            yawminroll = np.arctan2(R[0, 1], R[1, 1])
+
+            # return two arbitrary solutions that satisfy the constraint roll - yaw = rollminyaw
+            yaw = yawminroll + 0
+            roll = 0
+
+            return roll, pitch, yaw, RPY_RES.SUB
+
+        elif np.isclose(pitch, -np.pi / 2):
+            yawplusroll = np.arctan2(R[0, 1], R[1, 1])
+
+            yaw = yawplusroll - 0
+            roll = 0
+
+            return roll, pitch, yaw, RPY_RES.SUM
+
+        else:
+            assert False, "Singularity case unhandled"
 
 
 if __name__ == "__main__":

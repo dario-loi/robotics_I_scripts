@@ -21,8 +21,10 @@ limitations under the License.
 import numpy as np
 import pytest
 from rich import print
+from typing import Optional, Tuple, Type, Union
 
 from pyrobots import rotations as rot
+from pyrobots.rotations import RPY_RES
 
 
 def test_direct() -> None:
@@ -147,9 +149,9 @@ def test_roll_pitch_yaw_single() -> None:
 def test_roll_pitch_yaw_multiple() -> None:
     R = rot.direct_rpy(np.pi, np.pi, np.pi)
     R_expected = (
-        rot.direct_rot_mat(np.pi, np.array([1, 0, 0]))
+        rot.direct_rot_mat(np.pi, np.array([0, 0, 1]))
         @ rot.direct_rot_mat(np.pi, np.array([0, 1, 0]))
-        @ rot.direct_rot_mat(np.pi, np.array([0, 0, 1]))
+        @ rot.direct_rot_mat(np.pi, np.array([1, 0, 0]))
     )
 
     assert np.allclose(R, R_expected), "Rotation matrix should be correct"
@@ -165,3 +167,64 @@ def test_roll_pitch_yaw_separate() -> None:
     assert np.allclose(R_roll, R_expected_roll), "Rotation matrix should be correct"
     assert np.allclose(R_pitch, R_expected_pitch), "Rotation matrix should be correct"
     assert np.allclose(R_yaw, R_expected_yaw), "Rotation matrix should be correct"
+
+
+def test_rpy_separate_equal_to_direct() -> None:
+    R1 = rot.direct_rot_mat(np.pi / 2, np.array([1, 0, 0]))
+
+    R2_roll, R2_pitch, R2_yaw = rot.direct_rpy_separate(np.pi / 2, 0, 0)
+    R2 = R2_yaw @ R2_pitch @ R2_roll
+
+    assert np.allclose(
+        R1, R2
+    ), "Rotation matrices should be equal when computed through different methods"
+
+    angle, axis = rot.inverse_rot_mat(R1)
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R1)
+
+    assert axis is not None, "Axis should not be None"
+    assert isinstance(
+        angle, float
+    ), f"Angle should be a single float, not {type(angle)}"
+    assert np.isclose(angle, np.pi / 2), "Angle should be pi/2"
+    assert np.allclose(axis, np.array([1, 0, 0])), "Axis should be [1, 0, 0]"
+
+    assert np.isclose(roll, np.pi / 2), "Roll should be pi/2"
+    assert np.isclose(pitch, 0), "Pitch should be 0"
+    assert np.isclose(yaw, 0), "Yaw should be 0"
+
+    assert ambiguity == None, "There should be no ambiguity"
+    assert np.allclose(roll, angle), "Roll should be equal to angle"
+
+
+def test_roll_pitch_yaw_inverse() -> None:
+    R = rot.direct_rpy(np.pi / 4, np.pi / 4, np.pi / 4)
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
+
+    assert ambiguity == None, "There should be no ambiguity"
+
+    print(roll, pitch, yaw)
+
+    assert np.isclose(roll, np.pi / 4), "Roll should be pi/4"
+    assert np.isclose(pitch, np.pi / 4), "Pitch should be pi/4"
+    assert np.isclose(yaw, np.pi / 4), "Yaw should be pi/4"
+
+
+def test_roll_pitch_yaw_inverse_ambiguity_sub() -> None:
+    R = rot.direct_rpy(np.pi, np.pi / 2, np.pi)
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
+
+    assert (
+        ambiguity == RPY_RES.SUB
+    ), "There should be an ambiguity with subtractive constraints"
+    assert np.isclose(pitch, np.pi / 2), "Pitch should be pi/2"
+
+
+def test_roll_pitch_yaw_inverse_ambiguity_sum() -> None:
+    R = rot.direct_rpy(np.pi, -np.pi / 2, np.pi)
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
+
+    assert (
+        ambiguity == RPY_RES.SUM
+    ), "There should be an ambiguity with additive constraints"
+    assert np.isclose(pitch, -np.pi / 2), "Pitch should be -pi/2"
