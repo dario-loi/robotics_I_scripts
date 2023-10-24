@@ -5,11 +5,11 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-json
-    -   id: check-added-large-files
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
   - repo: local
     hooks:
       - id: isort
@@ -29,7 +29,7 @@ repos:
       - id: mypy
         name: mypy
         language: system # run on src and tests
-        files: ^src/.*\.py$ ^tests/.*\.py$
+        files: ^src/pyrobots/.*\.py$ ^tests/.*\.py$
         entry: pdm run mypy
         types: [python]
         args: [--ignore-missing-imports]

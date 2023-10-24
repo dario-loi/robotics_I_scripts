@@ -22,8 +22,8 @@ limitations under the License.
 
 """
 
-from typing import Optional, Tuple, Type, Union
 from enum import Enum
+from typing import Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -228,10 +228,12 @@ def inverse_rpy(
         np.dot(R.T, R), np.eye(3)
     ), "R must be a rotation matrix (orthonomal with determinant 1), R^T @ R != I"
 
-    ctet = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
-    pitch = np.arctan2(-R[2, 0], np.sqrt(ctet))
+    ctetsq = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
+    ctet = np.sqrt(ctetsq)
 
-    if not np.isclose(ctet, 0):
+    pitch = np.arctan2(-R[2, 0], ctet)
+
+    if not np.isclose(ctetsq, 0, atol=1e-12):
         roll = np.arctan2(R[2, 1] / ctet, R[2, 2] / ctet)
         yaw = np.arctan2(R[1, 0] / ctet, R[0, 0] / ctet)
 
