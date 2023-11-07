@@ -358,7 +358,7 @@ def simplify(
     """
     parsed_matrix = parse_ndarray(matrix)
     fmt_foo = lambda arr: fmt_array(arr, True)
-    R_fmt: str = fmt_foo(R)
+    R_fmt: str = fmt_foo(parsed_matrix)
 
     print("-" * SEP_LENGTH)
     print(f"Simplified Matrix:\n{R_fmt}")
