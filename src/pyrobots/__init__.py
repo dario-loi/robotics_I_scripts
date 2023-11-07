@@ -18,4 +18,5 @@ limitations under the License.
 
 """
 
+from .eigen import *
 from .rotations import *

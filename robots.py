@@ -120,7 +120,11 @@ def format_known_or(x: floating[Any] | None) -> str:
     return str(Fraction(float(x)).limit_denominator())
 
 
-def fmt_array(array: np.ndarray | float | Tuple[float, float], fract: bool) -> str:
+def fmt_array(
+    array: np.ndarray | float | Tuple[float, float], fract: bool, round: bool
+) -> str:
+    assert not (round and fract), "Cannot round and simplify at the same time"
+
     if not isinstance(array, np.ndarray):
         arr = np.array(array)
     else:
@@ -133,8 +137,19 @@ def fmt_array(array: np.ndarray | float | Tuple[float, float], fract: bool) -> s
             suppress_small=True,
             formatter={"float": lambda x: format_known_or(x)},
         )
+    elif round:
+        return np.array2string(
+            arr,
+            separator=", ",
+            suppress_small=True,
+            formatter={"float_kind": lambda x: f"{x:.4f}"},
+        )
     else:
-        return np.array2string(arr, separator=", ")
+        return np.array2string(
+            arr,
+            separator=", ",
+            suppress_small=True,
+        )
 
 
 @app.command()
@@ -148,7 +163,17 @@ def rotation_interactive(
             help="Simplify results to fractions and well-known constants",
             show_default=False,
         ),
-    ] = False
+    ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
+            show_default=False,
+        ),
+    ] = False,
 ) -> None:
     """
     Interactive interface to solve rotation problems.
@@ -159,7 +184,10 @@ def rotation_interactive(
     )
     problem_type = RotProblemType(problem_str.strip().lower())
     R_str: str
-    fmt_foo = lambda arr: fmt_array(arr, fract)
+
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
 
     match problem_type:
         case RotProblemType.DIRECT:
@@ -207,14 +235,26 @@ def rotation_direct(
             show_default=False,
         ),
     ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
+            show_default=False,
+        ),
+    ] = False,
 ) -> None:
     """
     Direct rotation problem.
     """
 
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
     parsed_axis: np.ndarray = parse_axis(axis)
     parsed_theta: float = eval_expr(theta)
-    fmt_foo = lambda arr: fmt_array(arr, fract)
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
     R = pr.rotations.direct_rot_mat(parsed_theta, parsed_axis)
     R_str: str = fmt_foo(R)
     print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_str}")
@@ -233,13 +273,26 @@ def rotation_inverse(
             show_default=False,
         ),
     ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
+            show_default=False,
+        ),
+    ] = False,
 ) -> None:
     """
     Inverse rotation problem.
     """
+
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
     parsed_R: np.ndarray = parse_ndarray(r_matrix)
     theta, axis = pr.rotations.inverse_rot_mat(parsed_R)
-    fmt_foo = lambda arr: fmt_array(arr, fract)
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
     print(
         f"Inverse Rotation:\n\t:triangular_ruler: theta = {fmt_foo(theta)}\n\t:straight_ruler: axis = {fmt_foo(axis)}"
     )
@@ -257,6 +310,16 @@ def rpy_direct(
             "--fract",
             "-f",
             help="Simplify results to fractions and well-known constants",
+            show_default=False,
+        ),
+    ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
             show_default=False,
         ),
     ] = False,
@@ -279,7 +342,9 @@ def rpy_direct(
     parsed_pitch: float = eval_expr(pitch)
     parsed_yaw: float = eval_expr(yaw)
 
-    fmt_foo = lambda arr: fmt_array(arr, fract)
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
 
     if separate:
         R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(
@@ -314,16 +379,28 @@ def rpy_inverse(
             show_default=False,
         ),
     ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
+            show_default=False,
+        ),
+    ] = False,
 ) -> None:
     """
     Inverse roll-pitch-yaw problem
     """
 
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
     parsed_R = parse_ndarray(r_matrix)
 
     roll, pitch, yaw, sing = pr.rotations.inverse_rpy(parsed_R)
 
-    fmt_foo = lambda arr: fmt_array(arr, fract)
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
 
     if not sing:
         print("-" * SEP_LENGTH)
@@ -350,18 +427,75 @@ def rpy_inverse(
 
 
 @app.command()
+def real_eigen(
+    r_matrix: NDarray,
+    fract: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Simplify results to fractions and well-known constants",
+            show_default=False,
+        ),
+    ] = False,
+    round: Annotated[
+        bool,
+        typer.Option(
+            ...,
+            "--fract",
+            "-f",
+            help="Round results to 4 decimal places",
+            show_default=False,
+        ),
+    ] = False,
+) -> None:
+    """
+    Extract all the eigenvectors with real eigenvalues from a matrix
+    """
+
+    parsed_R = parse_ndarray(r_matrix)
+    eigvals, eigvecs = pr.eigen.eigenvectors(parsed_R)
+
+    assert not (fract and round), "Cannot round and simplify at the same time"
+
+    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+
+    print("-" * SEP_LENGTH)
+    print(f"There are {eigvals.shape[0]} eigenvalue(s):")
+    for i in range(eigvals.shape[0]):
+        print(f"\tEigenvalue {i+1}: {fmt_foo(eigvals[i])}")
+        print(f"\tAssociated eigenvector:\n\t{fmt_foo(eigvecs[:,i])}\n")
+
+
+@app.command()
 def simplify(
     matrix: NDarray,
 ) -> None:
     """
-    Simplify a matrix
+    Simplify the values in a matrix
     """
     parsed_matrix = parse_ndarray(matrix)
-    fmt_foo = lambda arr: fmt_array(arr, True)
+    fmt_foo = lambda arr: fmt_array(arr, True, False)
     R_fmt: str = fmt_foo(parsed_matrix)
 
     print("-" * SEP_LENGTH)
     print(f"Simplified Matrix:\n{R_fmt}")
+
+
+@app.command()
+def round(
+    matrix: NDarray,
+) -> None:
+    """
+    Round the values in a matrix to 4 decimal places
+    """
+    parsed_matrix = parse_ndarray(matrix)
+    fmt_foo = lambda arr: fmt_array(arr, False, True)
+    R_fmt: str = fmt_foo(parsed_matrix)
+
+    print("-" * SEP_LENGTH)
+    print(f"Rounded Matrix:\n{R_fmt}")
 
 
 if __name__ == "__main__":
