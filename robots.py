@@ -349,5 +349,20 @@ def rpy_inverse(
         print(f"\tunder constraint yaw - roll: {fmt_foo(yaw - roll)}")
 
 
+@app.command()
+def simplify(
+    matrix: NDarray,
+) -> None:
+    """
+    Simplify a matrix
+    """
+    parsed_matrix = parse_ndarray(matrix)
+    fmt_foo = lambda arr: fmt_array(arr, True)
+    R_fmt: str = fmt_foo(R)
+
+    print("-" * SEP_LENGTH)
+    print(f"Simplified Matrix:\n{R_fmt}")
+
+
 if __name__ == "__main__":
     app()

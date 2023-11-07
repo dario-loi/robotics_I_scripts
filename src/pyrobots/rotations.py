@@ -231,7 +231,7 @@ def inverse_rpy(
     ctetsq = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
     ctet = np.sqrt(ctetsq)
 
-    pitch = np.arctan2(-R[2, 0], ctet)
+    pitch = np.arctan2(-R[2, 0], -ctet)
 
     if not np.isclose(ctetsq, 0, atol=1e-12):
         roll = np.arctan2(R[2, 1] / ctet, R[2, 2] / ctet)
