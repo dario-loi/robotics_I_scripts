@@ -1,0 +1,73 @@
+\documentclass{article}
+
+\author{Dario Loi}
+
+\date{\today}
+\title{RPY Singularity Inverse Proof}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% define definitions, theorems, etc.
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+
+\DeclareMathOperator{\atan2}{atan2}
+
+\begin{document}
+\maketitle
+
+\section{Proof}
+\begin{definition}[RPY Inverse]
+    A singularity occurs in an inverse problem of a fixed-axis RPY matrix if the pitch angle
+    $\theta$ is equal to $\pm \frac{\pi}{2}$. We can still extract the roll and yaw angles as a sum/difference,
+    but we cannot recover the individual angles precisely.
+
+    The formula for these combinations is:
+
+    \begin{equation}
+        \begin{cases}
+            \phi - \psi = \atan2 \left\{ \texttt{R[0][2]}, \texttt{R[1][2]} \right\} \quad  & \text{if } \theta = \frac{\pi}{2}  \\
+            \phi + \psi = \atan2 \left\{ \texttt{-R[1][2]}, \texttt{R[1][1]} \right\} \quad & \text{if } \theta = -\frac{\pi}{2}
+        \end{cases}
+    \end{equation}
+
+    Where \texttt{R} is the rotation matrix, indexed starting from 0.\ (i.e.:\ \texttt{R[0][2]} is the first row, third column).
+\end{definition}
+
+\begin{proof}[RPY Inverse Proof]
+    \begin{align}
+        R(\psi, \theta, \phi)         & = \begin{bmatrix}
+                                              c\phi c\theta & c\phi s\theta s\psi - s\phi c\psi & c\phi s\theta c\psi + s\phi s\psi \\
+                                              s\phi c\theta & s\phi s\theta s\psi + c\phi c\psi & s\phi s\theta c\psi - c\phi s\psi \\
+                                              -s\theta      & c\theta s\psi                     & c\theta c\psi
+                                          \end{bmatrix} \\
+        \intertext{Considering the case where $\theta = \frac{\pi}{2}$:}
+        R(\psi, \frac{\pi}{2}, \phi)  & = \begin{bmatrix}
+                                              0  & c\phi s\psi - s\phi c\psi & c\phi c\psi + s\phi s\psi \\
+                                              0  & s\phi s\psi + c\phi c\psi & s\psi c\phi - c\psi s\phi \\
+                                              -1 & 0                         & 0
+                                          \end{bmatrix}                            \\
+        \intertext{Now consider two trigonometric properties:}
+        \sin(\phi - \psi)             & = \underbrace{\sin(\phi)\cos(\psi) - \cos(\phi)\sin(\psi)}_{\texttt{R[0][2]}}           \\
+        \cos(\phi - \psi)             & = \underbrace{\cos(\phi)\cos(\psi) + \sin(\phi)\sin(\psi)}_{\texttt{R[1][2]}}           \\
+        \intertext{We can now solve for $\phi - \psi$ using the inverse tangent function:}
+        \phi - \psi                   & = \atan2 \left\{ \texttt{R[0][2]}, \texttt{R[1][2]} \right\}
+        \intertext{Similarly, for $\theta = -\frac{\pi}{2}$:}
+        R(\psi, -\frac{\pi}{2}, \phi) & = \begin{bmatrix}
+                                              0 & -c\phi s \psi - s \phi c\psi & s \phi s \psi - c \phi c \psi    \\
+                                              0 & c\phi c \psi - s \phi s\psi  & -(s \phi c \psi + c \phi s \psi) \\
+                                              1 & 0                            & 0
+                                          \end{bmatrix}                   \\
+        \intertext{Through the dual of the previous properties:}
+        \sin(\phi + \psi)             & = \underbrace{\sin(\phi)\cos(\psi) + \cos(\phi)\sin(\psi)}_{\texttt{-R[1][2]}}          \\
+        \cos(\phi + \psi)             & = \underbrace{\cos(\phi)\cos(\psi) - \sin(\phi)\sin(\psi)}_{\texttt{R[1][1]}}           \\
+        \intertext{We can now solve for $\phi + \psi$ using the inverse tangent function:}
+        \phi + \psi                   & = \atan2 \left\{ \texttt{-R[1][2]}, \texttt{R[1][1]} \right\}
+    \end{align}
+    Additionally, one can freely choose an assignment for either $\phi$ or $\psi$, and then solve for the other angle.
+\end{proof}
+\end{document}
