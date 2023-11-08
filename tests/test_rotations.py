@@ -18,10 +18,11 @@ limitations under the License.
 
 """
 
+from typing import Optional, Tuple, Type, Union
+
 import numpy as np
 import pytest
 from rich import print
-from typing import Optional, Tuple, Type, Union
 
 from pyrobots import rotations as rot
 from pyrobots.rotations import RPY_RES
@@ -195,6 +196,23 @@ def test_rpy_separate_equal_to_direct() -> None:
 
     assert ambiguity == None, "There should be no ambiguity"
     assert np.allclose(roll, angle), "Roll should be equal to angle"
+
+
+def test_rpy_singularity() -> None:
+    R = rot.direct_rpy(1, np.pi / 2, 1)
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
+
+    assert ambiguity == RPY_RES.SUB, f"There should be a subtractive ambiguity"
+    assert np.isclose(roll - yaw, 0), f"Roll - Yaw should be 0, not {roll - yaw}"
+    assert np.isclose(pitch, np.pi / 2), f"Pitch should be pi/2, not {pitch}"
+
+    R = rot.direct_rpy(1, -np.pi / 2, 1)
+
+    roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
+
+    assert ambiguity == RPY_RES.SUM, f"There should be an additive ambiguity"
+    assert np.isclose(roll + yaw, 2), f"Roll + Yaw should be 2, not {roll + yaw}"
+    assert np.isclose(pitch, -np.pi / 2), f"Pitch should be -pi/2, not {pitch}"
 
 
 def test_roll_pitch_yaw_inverse() -> None:

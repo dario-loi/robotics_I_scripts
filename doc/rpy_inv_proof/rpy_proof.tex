@@ -30,12 +30,12 @@
 
     \begin{equation}
         \begin{cases}
-            \phi - \psi = \atan2 \left\{ \texttt{R[0][2]}, \texttt{R[1][2]} \right\} \quad  & \text{if } \theta = \frac{\pi}{2}  \\
+            \phi - \psi = \atan2 \left\{ \texttt{R[1][2]}, \texttt{R[0][2]} \right\} \quad  & \text{if } \theta = \frac{\pi}{2}  \\
             \phi + \psi = \atan2 \left\{ \texttt{-R[1][2]}, \texttt{R[1][1]} \right\} \quad & \text{if } \theta = -\frac{\pi}{2}
         \end{cases}
     \end{equation}
 
-    Where \texttt{R} is the rotation matrix, indexed starting from 0.\ (i.e.:\ \texttt{R[0][2]} is the first row, third column).
+    Where \texttt{R} is the rotation matrix, indexed starting from 0.\ (i.e.:\ \texttt{R[1][2]} is the first row, third column).
 \end{definition}
 
 \begin{proof}[RPY Inverse Proof]
@@ -48,20 +48,20 @@
         \intertext{Considering the case where $\theta = \frac{\pi}{2}$:}
         R(\psi, \frac{\pi}{2}, \phi)  & = \begin{bmatrix}
                                               0  & c\phi s\psi - s\phi c\psi & c\phi c\psi + s\phi s\psi \\
-                                              0  & s\phi s\psi + c\phi c\psi & s\psi c\phi - c\psi s\phi \\
+                                              0  & s\phi s\psi + c\phi c\psi & s\phi c\psi - c\phi s\psi \\
                                               -1 & 0                         & 0
                                           \end{bmatrix}                            \\
         \intertext{Now consider two trigonometric properties:}
-        \sin(\phi - \psi)             & = \underbrace{\sin(\phi)\cos(\psi) - \cos(\phi)\sin(\psi)}_{\texttt{R[0][2]}}           \\
-        \cos(\phi - \psi)             & = \underbrace{\cos(\phi)\cos(\psi) + \sin(\phi)\sin(\psi)}_{\texttt{R[1][2]}}           \\
+        \sin(\phi - \psi)             & = \underbrace{\sin(\phi)\cos(\psi) - \cos(\phi)\sin(\psi)}_{\texttt{R[1][2]}}           \\
+        \cos(\phi - \psi)             & = \underbrace{\cos(\phi)\cos(\psi) + \sin(\phi)\sin(\psi)}_{\texttt{R[0][2]}}           \\
         \intertext{We can now solve for $\phi - \psi$ using the inverse tangent function:}
-        \phi - \psi                   & = \atan2 \left\{ \texttt{R[0][2]}, \texttt{R[1][2]} \right\}
+        \phi - \psi                   & = \atan2 \left\{ \texttt{R[1][2]}, \texttt{R[0][2]} \right\}
         \intertext{Similarly, for $\theta = -\frac{\pi}{2}$:}
         R(\psi, -\frac{\pi}{2}, \phi) & = \begin{bmatrix}
-                                              0 & -c\phi s \psi - s \phi c\psi & s \phi s \psi - c \phi c \psi    \\
-                                              0 & c\phi c \psi - s \phi s\psi  & -(s \phi c \psi + c \phi s \psi) \\
+                                              0 & -(s\phi c\psi + c\phi s\psi) & s\phi s\psi -c\phi  c\psi    \\
+                                              0 & c\phi c\psi -s\phi s\psi     & -(s\phi c\psi + c\phi s\psi) \\
                                               1 & 0                            & 0
-                                          \end{bmatrix}                   \\
+                                          \end{bmatrix}                       \\
         \intertext{Through the dual of the previous properties:}
         \sin(\phi + \psi)             & = \underbrace{\sin(\phi)\cos(\psi) + \cos(\phi)\sin(\psi)}_{\texttt{-R[1][2]}}          \\
         \cos(\phi + \psi)             & = \underbrace{\cos(\phi)\cos(\psi) - \sin(\phi)\sin(\psi)}_{\texttt{R[1][1]}}           \\

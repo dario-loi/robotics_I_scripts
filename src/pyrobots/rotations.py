@@ -231,7 +231,7 @@ def inverse_rpy(
     ctetsq = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
     ctet = np.sqrt(ctetsq)
 
-    pitch = np.arctan2(-R[2, 0], -ctet)
+    pitch = np.arctan2(-R[2, 0], ctet)
 
     if not np.isclose(ctetsq, 0, atol=1e-12):
         roll = np.arctan2(R[2, 1] / ctet, R[2, 2] / ctet)
@@ -243,19 +243,19 @@ def inverse_rpy(
         # https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
         # (by assuming a free variable to always be 0 and then solving for the others through basic algebra)
         if np.isclose(pitch, np.pi / 2):
-            yawminroll = np.arctan2(R[0, 1], R[1, 1])
+            yawminroll = np.arctan2(R[1, 2], R[0, 2])
 
             # return two arbitrary solutions that satisfy the constraint roll - yaw = rollminyaw
-            yaw = yawminroll + 0
-            roll = 0
+            yaw = yawminroll + 0.0
+            roll = 0.0
 
             return roll, pitch, yaw, RPY_RES.SUB
 
         elif np.isclose(pitch, -np.pi / 2):
-            yawplusroll = np.arctan2(R[0, 1], R[1, 1])
+            yawplusroll = np.arctan2(-R[1, 2], R[1, 1])
 
-            yaw = yawplusroll - 0
-            roll = 0
+            yaw = yawplusroll - 0.0
+            roll = 0.0
 
             return roll, pitch, yaw, RPY_RES.SUM
 
