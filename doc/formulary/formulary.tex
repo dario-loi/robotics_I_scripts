@@ -3,14 +3,26 @@
 %date: 2019-10-15
 
 \documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+
 \usepackage{amsmath}
 \usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=black
+  }
+\usepackage{cleveref}
+
 \DeclareMathOperator{\atan2}{atan2}
 
 \begin{document}
 \title{Robotics 1 \\ Exercise Solver}
 \maketitle
 \tableofcontents
+\clearpage
 \section{Rotation Matrices}\label{sec:rotation}
 \subsection{Check if R is a rotation matrix}\label{sec:check_rotation}
 To check if R is a rotation matrix we have to check:
@@ -38,11 +50,11 @@ a singularity:
 \begin{equation}
 \sin(\theta) = \frac{1}{2}\left(\sqrt{(R_{32}-R_{23})^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\right)
 \end{equation}
-\subsubsection{singularity (hence $\sin(\theta) = 0$)}
+\subsubsection{Singularity (hence $\sin(\theta) = 0$)}
 If it is a singularity we can find \textbf{r} and $\theta$:
 if $\theta$ is 0: there is no solution for r.
 if $\theta$ is $\pm\pi$:\\
-we set $sin(\theta) = 0$, $\cos(\theta) = -1$ and we find \textbf{r}:
+we set $\sin(\theta) = 0$, $\cos(\theta) = -1$ and we find \textbf{r}:
 \begin{equation}
 \textbf{r} = \frac{1}{2}\begin{bmatrix}
 \pm \sqrt{R_{11}+1} \\
@@ -56,13 +68,13 @@ To decide the signs of the elements of \textbf{r} we can use the following crite
 \item $r_x r_z = R_{13}/2$
 \item $r_y r_z = R_{23}/2$
 \end{itemize}
-\subsubsection{not singularity}
-If the singularity is not present we can find theta and \textbf{r}:\\
+\subsubsection{Not singularity}
+If the singularity is not present we can find $\theta$ and \textbf{r}:\\
 \textbf{Note: we obtain two solutions for $\theta$ and cosequently r}
 \begin{align}
 \cos(\theta) &= \left(R_{11}+R_{22}+R_{33}-1\right)\\
-\sin(\theta) &= \pm\sqrt{(R_{32}-R_{23})^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\\
-\theta &= \atan2\left(\sin\theta,\cos\theta\right) \in (-\pi,\pi]
+\sin(\theta) &= \pm\sqrt{{(R_{32}-R_{23})}^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\\
+\theta &= \atan2\left(\sin\theta,\cos\theta\right) \in \left(-\pi,\pi\right]
 \end{align}
 \begin{equation}
 \textbf{r} = \frac{1}{2\sin(\theta)}\begin{bmatrix}
@@ -78,28 +90,33 @@ To find R from $\psi$, $\theta$ and $\phi$ we use the following formula:
 \begin{equation}
 R(\psi,\theta,\phi) = R_z(\phi)R_y(\theta)R_x(\psi)
 \end{equation}
-\textbf{Note: the order of the angle is reversed!}
+\textbf{Note: the order of the angles is reversed!}
 \subsection{Inverse Problem}
-Given a rotation matrix R we can find $\psi$, $\theta$ and $\phi$:
-Fisrt check if there is a singularity (if $R_{32}^2+R_{33}^2 = 0$).
-\subsubsection{singularity (hence $R_{32}^2+R_{33}^2 = 0$)}
-If it is a singularity we can find $\phi+\psi$ and $\phi-\psi$:
-\begin{align}
-\phi+\psi &= \atan2\left(-R_{23},R_{13}\right) or \\
-\phi+\psi &= \atan2\left(-R_{12},R_{22}\right)\\
-\phi-\psi &= \atan2\left(R_{31},\pm\sqrt{R_{32}^2+R_{33}^2}\right)
-\end{align}
-\subsubsection{not singularity}
-If it is not a singularity we can find $\psi$, $\theta$ and $\phi$:
-\begin{align}
-\theta &= \atan2\left(-R_{31},\pm\sqrt{R_{32}^2+R_{33}^2}\right)\\
-\phi &= \atan2\left(R_{21}/\cos(\theta),R_{11}/\cos(\theta)\right)\\
-\psi &= \atan2\left(R_{32}/\cos(\theta),R_{33}/\cos(\theta)\right)
-\end{align}
+Given a rotation matrix $R$ we can find angles of rotation $\psi$, $\theta$ and $\phi$:
+Fisrt we check if there is a singularity (if $R_{32}^2+R_{33}^2 = 0$), we then have
+two cases:
+
+\begin{itemize}
+  \item \textbf{No Singularity} --- We can find all three parameters of the
+  rotational matrix $R$ \begin{align}
+    \theta &= \atan2\left(-R_{31},\pm\sqrt{R_{32}^2+R_{33}^2}\right)\\
+    \phi &= \atan2\left(R_{21}/\cos(\theta),R_{11}/\cos(\theta)\right)\\
+    \psi &= \atan2\left(R_{32}/\cos(\theta),R_{33}/\cos(\theta)\right)
+    \end{align}
+  \item \textbf{Singularity} --- We cannot find all three angles, only $\theta$ and a combination
+  of $\phi$ and $\psi$, the formula for these combinations is:
+
+  \begin{equation}
+      \begin{cases}
+          \phi - \psi = \atan2 \left\{ R_{2,3}, R_{1,3} \right\} \quad  & \text{if } \theta = \frac{\pi}{2}  \\
+          \phi + \psi = \atan2 \left\{  -R_{2,3}, R_{2,2} \right\} \quad & \text{if } \theta = -\frac{\pi}{2}
+      \end{cases}
+  \end{equation}
+\end{itemize}
 
 
 \section{DH frames}
-\subsection{Assign axis}
+\subsection{Axis assignment}
 \begin{itemize}
 \item \textbf{$z_i$} along the direction of joint i+1.
 \item \textbf{$x_i$} along the common normal between $z_i$ and $z_{i-1}$.
@@ -124,7 +141,7 @@ If it is not a singularity we can find $\psi$, $\theta$ and $\phi$:
 \subsection{DH parameters from transformation matrix}
 First we have to check that the first three by three submatrix is
  a rotation matrix
-  \hyperref[sec:check_rotation]{(see section \ref{sec:check_rotation})}.\\
+  \hyperref[sec:check_rotation]{(see \cref{sec:check_rotation})}.\\
 Then we can find the parameters:
 \begin{align}
 \theta_i &= \atan2\left(R_{12},R_{11}\right)\\
