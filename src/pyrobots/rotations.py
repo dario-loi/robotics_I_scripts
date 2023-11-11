@@ -373,7 +373,7 @@ def direct_symbolic(
         else:
             assert False, "Invalid axis"
 
-    mats = [gen_mat(axis) for axis in axes]
+    mats = [gen_mat(axis, i) for i, axis in enumerate(axes)]
 
     R = mats[2] @ mats[1] @ mats[0]
 
