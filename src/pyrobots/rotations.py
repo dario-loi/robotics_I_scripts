@@ -245,7 +245,10 @@ class AXIS(Enum):
 
 def inverse_rpy(
     R: np.ndarray,
-) -> Tuple[float, float, float, Optional[RPY_RES]]:
+) -> Tuple[
+    Tuple[float, float, float, Optional[RPY_RES]],
+    Tuple[float, float, float, Optional[RPY_RES]],
+]:
     """inverse_rpy Calculates the roll, pitch and yaw angles for a given rotation matrix.
 
     Parameters
@@ -255,9 +258,8 @@ def inverse_rpy(
 
     Returns
     -------
-    Tuple[float, float, float, Optional[RPY_RES]]
-        Roll, pitch and yaw angles in radians, with an additional flag to indicate the ambiguity in the solution.
-        Roll and yaw can be subject to constraints if the ambiguity is present, while pitch is always unambiguous.
+    Tuple[Tuple[float, float, float, Optional[RPY_RES]], Tuple[float, float, float, Optional[RPY_RES]]]
+        Two tuples of floats representing the roll, pitch and yaw angles in radians, and the ambiguity resolution.
 
     """
 
@@ -273,36 +275,41 @@ def inverse_rpy(
     ctetsq = np.power(R[2, 1], 2) + np.power(R[2, 2], 2)
     ctet = np.sqrt(ctetsq)
 
-    pitch = np.arctan2(-R[2, 0], ctet)
+    pitch1 = np.arctan2(-R[2, 0], ctet)
+    pitch2 = np.arctan2(-R[2, 0], -ctet)
 
-    if not np.isclose(ctetsq, 0, atol=1e-12):
-        roll = np.arctan2(R[2, 1] / ctet, R[2, 2] / ctet)
-        yaw = np.arctan2(R[1, 0] / ctet, R[0, 0] / ctet)
-
-        return roll, pitch, yaw, None
-    else:
-        # ambiguity resolution formulas extracted from
-        # https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
-        # (by assuming a free variable to always be 0 and then solving for the others through basic algebra)
+    def get_pitch_sol(mat, pitch):
         if np.isclose(pitch, np.pi / 2):
-            yawminroll = np.arctan2(R[1, 2], R[0, 2])
+            yawminroll = np.arctan2(mat[1, 2], mat[0, 2])
 
             # return two arbitrary solutions that satisfy the constraint roll - yaw = rollminyaw
             yaw = yawminroll + 0.0
             roll = 0.0
 
             return roll, pitch, yaw, RPY_RES.SUB
-
         elif np.isclose(pitch, -np.pi / 2):
-            yawplusroll = np.arctan2(-R[1, 2], R[1, 1])
+            yawplusroll = np.arctan2(-mat[1, 2], mat[1, 1])
 
             yaw = yawplusroll - 0.0
             roll = 0.0
 
             return roll, pitch, yaw, RPY_RES.SUM
-
         else:
             assert False, "Singularity case unhandled"
+
+    if not np.isclose(ctetsq, 0, atol=1e-12):
+        cos1 = np.cos(pitch1)
+        cos2 = np.cos(pitch2)
+
+        roll1 = np.arctan2(R[2, 1] / ctet, R[2, 2] / cos1)
+        roll2 = np.arctan2(R[2, 1] / ctet, R[2, 2] / cos2)
+
+        yaw1 = np.arctan2(R[1, 0] / ctet, R[0, 0] / cos1)
+        yaw2 = np.arctan2(R[1, 0] / ctet, R[0, 0] / cos2)
+
+        return (roll1, pitch1, yaw1, None), (roll2, pitch2, yaw2, None)
+    else:
+        return get_pitch_sol(R, pitch1), get_pitch_sol(R, pitch2)
 
 
 def gen_roll(symbol):
@@ -382,19 +389,19 @@ def get_symbols(
         match ax:
             case AXIS.X:
                 if use_greek_symbols:
-                    symbols.append(symbols(f"phi_{i}"))
+                    symbols.append(f"phi_{i}")
                 else:
-                    symbols.append(symbols(f"roll_{i}"))
+                    symbols.append(f"roll_{i}")
             case AXIS.Y:
                 if use_greek_symbols:
-                    symbols.append(symbols(f"theta_{i}"))
+                    symbols.append(f"theta_{i}")
                 else:
-                    symbols.append(symbols(f"pitch_{i}"))
+                    symbols.append(f"pitch_{i}")
             case AXIS.Z:
                 if use_greek_symbols:
-                    symbols.append(symbols(f"psi_{i}"))
+                    symbols.append(f"psi_{i}")
                 else:
-                    symbols.append(symbols(f"yaw_{i}"))
+                    symbols.append(f"yaw_{i}")
             case _:
                 assert False, "Invalid axis"
     return symbols
@@ -412,6 +419,7 @@ def direct_generic(
         [
             [R_sym[i, j].subs({sym: a for sym, a in zip(symbols, angles)})]
             for i in range(3)
+            for j in range(3)
         ]
     )
 
@@ -423,7 +431,7 @@ def direct_generic(
 
 def inverse_generic(
     axes: Tuple[AXIS, AXIS, AXIS], R: np.ndarray
-) -> Optional(Tuple[float, float, float]):
+) -> Optional[Tuple[float, float, float]]:
     """inverse_generic Invert a rotation matrix obtained from the composition of a rotation
     along three generic axes.
 
@@ -459,6 +467,11 @@ def inverse_generic(
 
 
 if __name__ == "__main__":
+    from rich import print
     from sympy import pprint
 
-    pprint(direct_symbolic((AXIS.X, AXIS.Z, AXIS.X)))
+    print(inverse_rpy(direct_rpy(0.1, 0.2, 0.3)))
+
+    pprint(
+        direct_generic((AXIS.X, AXIS.Y, AXIS.Z), (0.1, 0.2, 0.3), get_symbolic=True)[1]
+    )
