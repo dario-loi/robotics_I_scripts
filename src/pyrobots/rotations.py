@@ -26,6 +26,7 @@ from enum import Enum
 from typing import Optional, Tuple, Type, Union
 
 import numpy as np
+from sympy import Matrix, cos, sin, symbols
 
 
 def direct_rot_mat(theta: float, axis: np.ndarray) -> np.ndarray:
@@ -201,6 +202,12 @@ class RPY_RES(Enum):
     SUB = "phi - psi"
 
 
+class AXIS(Enum):
+    X = "x"
+    Y = "y"
+    Z = "z"
+
+
 def inverse_rpy(
     R: np.ndarray,
 ) -> Tuple[float, float, float, Optional[RPY_RES]]:
@@ -263,13 +270,112 @@ def inverse_rpy(
             assert False, "Singularity case unhandled"
 
 
-if __name__ == "__main__":
-    inverse_rot_mat(
-        np.array(
-            [
-                [0.70710678, -0.70710678, 0.0],
-                [0.70710678, 0.70710678, 0.0],
-                [0.0, 0.0, 1.0],
-            ]
-        )
+def gen_roll(symbol):
+    return Matrix(
+        [[1, 0, 0], [0, cos(symbol), -sin(symbol)], [0, sin(symbol), cos(symbol)]]
     )
+
+
+def gen_pitch(symbol):
+    return Matrix(
+        [[cos(symbol), 0, sin(symbol)], [0, 1, 0], [-sin(symbol), 0, cos(symbol)]]
+    )
+
+
+def gen_yaw(symbol):
+    return Matrix(
+        [[cos(symbol), -sin(symbol), 0], [sin(symbol), cos(symbol), 0], [0, 0, 1]]
+    )
+
+
+def direct_symbolic(
+    axes: Tuple[AXIS, AXIS, AXIS], use_greek_symbols: bool = True
+) -> Matrix:
+    """direct_symbolic Generates a symbolic rotation matrix for a given sequence of rotations along three generic axes.
+
+    Parameters
+    ----------
+    axes : Tuple[AXIS, AXIS, AXIS]
+        A triple of Enums representing the axes of rotation.
+    use_greek_symbols : bool, optional
+        Whether to use phi, theta, psi for the rotations or to state them explicityl as
+        roll, pitch, and yaw, by default True
+
+    Returns
+    -------
+    Matrix
+        A symbolic rotation matrix.
+    """
+
+    from sympy import init_printing
+
+    init_printing()
+
+    def gen_mat(axis: AXIS, i: int = 0):
+        if AXIS(axis) == AXIS.X:
+            if use_greek_symbols:
+                return gen_roll(f"phi_{i}")
+            else:
+                return gen_roll(f"roll_{i}")
+
+        elif AXIS(axis) == AXIS.Y:
+            if use_greek_symbols:
+                return gen_pitch(f"theta_{i}")
+            else:
+                return gen_pitch(f"pitch_{i}")
+        elif AXIS(axis) == AXIS.Z:
+            if use_greek_symbols:
+                return gen_yaw(f"psi_{i}")
+            else:
+                return gen_yaw(f"yaw_{i}")
+        else:
+            assert False, "Invalid axis"
+
+    mats = [gen_mat(axis) for axis in axes]
+
+    R = mats[2] @ mats[1] @ mats[0]
+
+    return R
+
+
+def inverse_generic(
+    axes: Tuple[AXIS, AXIS, AXIS], R: np.ndarray
+) -> Optional(Tuple[float, float, float]):
+    """inverse_generic Invert a rotation matrix obtained from the composition of a rotation
+    along three generic axes.
+
+    Parameters
+    ----------
+    axes : Tuple[AXIS, AXIS, AXIS]
+        A triple of Enums representing the axes of rotation.
+
+    Returns
+    -------
+    Optional(Tuple[float, float, float])
+        A tuple of floats representing the roll, pitch and yaw angles in radians.
+        If the matrix is singular, returns None.
+    """
+    R_sym = direct_symbolic(axes)
+
+    equations = []
+    for i in range(3):
+        for j in range(3):
+            equations.append(R_sym[i, j] - R[i, j])
+
+    try:
+        solutions = nsolve(
+            equations, (roll, pitch, yaw), (0, 0, 0), dict=True
+        )  # Solve the equations
+    except:
+        return None  # Singularity!
+
+    assert solutions is not None, "[BUG] Solutions should not be None"
+    assert solutions != [], "[BUG] Solutions should not be empty"
+
+    return solutions
+
+
+if __name__ == "__main__":
+    from sympy import pprint
+
+    pprint(direct_symbolic((AXIS.X, AXIS.Z, AXIS.X)))
