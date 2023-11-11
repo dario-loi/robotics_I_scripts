@@ -291,10 +291,10 @@ def rotation_inverse(
     assert not (fract and round), "Cannot round and simplify at the same time"
 
     parsed_R: np.ndarray = parse_ndarray(r_matrix)
-    theta, axis = pr.rotations.inverse_rot_mat(parsed_R)
+    thetas, axes = pr.rotations.inverse_rot_mat(parsed_R)
     fmt_foo = lambda arr: fmt_array(arr, fract, round)
     print(
-        f"Inverse Rotation:\n\t:triangular_ruler: theta = {fmt_foo(theta)}\n\t:straight_ruler: axis = {fmt_foo(axis)}"
+        f"Inverse Rotation:\n\t:triangular_ruler: theta(s) = {fmt_foo(thetas)}\n\t:straight_ruler: axis = {fmt_foo(axes)}"
     )
 
 
