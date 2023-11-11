@@ -338,19 +338,44 @@ def direct_symbolic(
     return R
 
 
+def get_symbols(
+    axes: Tuple[AXIS, AXIS, AXIS], use_greek_symbols: bool = True
+) -> Tuple[Type[symbols], Type[symbols], Type[symbols]]:
+    symbols = []
+
+    for i, ax in enumerate(axes):
+        match ax:
+            case AXIS.X:
+                if use_greek_symbols:
+                    symbols.append(symbols(f"phi_{i}"))
+                else:
+                    symbols.append(symbols(f"roll_{i}"))
+            case AXIS.Y:
+                if use_greek_symbols:
+                    symbols.append(symbols(f"theta_{i}"))
+                else:
+                    symbols.append(symbols(f"pitch_{i}"))
+            case AXIS.Z:
+                if use_greek_symbols:
+                    symbols.append(symbols(f"psi_{i}"))
+                else:
+                    symbols.append(symbols(f"yaw_{i}"))
+            case _:
+                assert False, "Invalid axis"
+    return symbols
+
+
 def direct_generic(
     axes: Tuple[AXIS, AXIS, AXIS],
     angles: Tuple[float, float, float],
     get_symbolic: bool = False,
 ) -> Tuple[np.ndarray, Optional[Matrix]]:
     R_sym = direct_symbolic(axes)
+    symbols = get_symbols(axes)
 
     R = np.array(
         [
-            [
-                R_sym[i, j].subs({roll: angles[0], pitch: angles[1], yaw: angles[2]})
-                for j in range(3)
-            ]
+            [R_sym[i, j].subs({sym: a for sym, a in zip(symbols, angles)})]
             for i in range(3)
         ]
     )
