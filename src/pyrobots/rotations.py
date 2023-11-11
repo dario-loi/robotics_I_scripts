@@ -338,6 +338,29 @@ def direct_symbolic(
     return R
 
 
+def direct_generic(
+    axes: Tuple[AXIS, AXIS, AXIS],
+    angles: Tuple[float, float, float],
+    get_symbolic: bool = False,
+) -> Tuple[np.ndarray, Optional[Matrix]]:
+    R_sym = direct_symbolic(axes)
+
+    R = np.array(
+        [
+            [
+                R_sym[i, j].subs({roll: angles[0], pitch: angles[1], yaw: angles[2]})
+                for j in range(3)
+            ]
+            for i in range(3)
+        ]
+    )
+
+    if get_symbolic:
+        return R, R_sym
+    else:
+        return R
+
+
 def inverse_generic(
     axes: Tuple[AXIS, AXIS, AXIS], R: np.ndarray
 ) -> Optional(Tuple[float, float, float]):
