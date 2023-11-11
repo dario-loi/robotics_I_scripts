@@ -301,11 +301,11 @@ def inverse_rpy(
         cos1 = np.cos(pitch1)
         cos2 = np.cos(pitch2)
 
-        roll1 = np.arctan2(R[2, 1] / ctet, R[2, 2] / cos1)
-        roll2 = np.arctan2(R[2, 1] / ctet, R[2, 2] / cos2)
+        roll1 = np.arctan2(R[2, 1] / cos1, R[2, 2] / cos1)
+        roll2 = np.arctan2(R[2, 1] / cos2, R[2, 2] / cos2)
 
-        yaw1 = np.arctan2(R[1, 0] / ctet, R[0, 0] / cos1)
-        yaw2 = np.arctan2(R[1, 0] / ctet, R[0, 0] / cos2)
+        yaw1 = np.arctan2(R[1, 0] / cos1, R[0, 0] / cos1)
+        yaw2 = np.arctan2(R[1, 0] / cos2, R[0, 0] / cos2)
 
         return (roll1, pitch1, yaw1, None), (roll2, pitch2, yaw2, None)
     else:
@@ -353,26 +353,6 @@ def direct_symbolic(
 
     init_printing()
 
-    def gen_mat(axis: AXIS, i: int = 0):
-        if AXIS(axis) == AXIS.X:
-            if use_greek_symbols:
-                return gen_roll(f"phi_{i}")
-            else:
-                return gen_roll(f"roll_{i}")
-
-        elif AXIS(axis) == AXIS.Y:
-            if use_greek_symbols:
-                return gen_pitch(f"theta_{i}")
-            else:
-                return gen_pitch(f"pitch_{i}")
-        elif AXIS(axis) == AXIS.Z:
-            if use_greek_symbols:
-                return gen_yaw(f"psi_{i}")
-            else:
-                return gen_yaw(f"yaw_{i}")
-        else:
-            assert False, "Invalid axis"
-
     mats = [gen_mat(axis, i) for i, axis in enumerate(axes)]
 
     R = mats[2] @ mats[1] @ mats[0]
@@ -380,10 +360,33 @@ def direct_symbolic(
     return R
 
 
+def gen_mat(axis: AXIS, i: int = 0, use_greek_symbols: bool = True) -> Matrix:
+    if AXIS(axis) == AXIS.X:
+        if use_greek_symbols:
+            return gen_roll(f"phi_{i}")
+        else:
+            return gen_roll(f"roll_{i}")
+
+    elif AXIS(axis) == AXIS.Y:
+        if use_greek_symbols:
+            return gen_pitch(f"theta_{i}")
+        else:
+            return gen_pitch(f"pitch_{i}")
+    elif AXIS(axis) == AXIS.Z:
+        if use_greek_symbols:
+            return gen_yaw(f"psi_{i}")
+        else:
+            return gen_yaw(f"yaw_{i}")
+    else:
+        assert False, "Invalid axis"
+
+
 def get_symbols(
     axes: Tuple[AXIS, AXIS, AXIS], use_greek_symbols: bool = True
 ) -> Tuple[Type[symbols], Type[symbols], Type[symbols]]:
     symbols = []
+
+    axes = [AXIS(axis) for axis in axes]
 
     for i, ax in enumerate(axes):
         match ax:
@@ -412,18 +415,20 @@ def direct_generic(
     angles: Tuple[float, float, float],
     get_symbolic: bool = False,
 ) -> Tuple[np.ndarray, Optional[Matrix]]:
-    R_sym = direct_symbolic(axes)
     symbols = get_symbols(axes)
 
-    R = np.array(
-        [
-            [R_sym[i, j].subs({sym: a for sym, a in zip(symbols, angles)})]
-            for i in range(3)
-            for j in range(3)
-        ]
-    )
+    A = gen_mat(axes[0], 0)
+    B = gen_mat(axes[1], 1)
+    C = gen_mat(axes[2], 2)
+
+    a = A.subs(symbols[0], angles[0])
+    b = B.subs(symbols[1], angles[1])
+    c = C.subs(symbols[2], angles[2])
+
+    R = np.array(a @ b @ c).astype(np.float64)
 
     if get_symbolic:
+        R_sym = direct_symbolic(axes)
         return R, R_sym
     else:
         return R
