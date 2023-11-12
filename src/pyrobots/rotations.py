@@ -417,6 +417,10 @@ def direct_generic(
 ) -> Tuple[np.ndarray, Optional[Matrix]]:
     symbols = get_symbols(axes)
 
+    from sympy import init_printing
+
+    init_printing()
+
     A = gen_mat(axes[0], 0)
     B = gen_mat(axes[1], 1)
     C = gen_mat(axes[2], 2)

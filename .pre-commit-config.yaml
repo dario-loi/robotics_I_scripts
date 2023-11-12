@@ -12,13 +12,6 @@ repos:
       - id: check-added-large-files
   - repo: local
     hooks:
-      - id: isort
-        name: isort
-        language: system
-        files: .*.py
-        entry: pdm run isort
-        types: [python]
-        args: [--profile black]
       - id: black # run on all files (passes some twice, but that's fine)
         name: black
         files: .*.py

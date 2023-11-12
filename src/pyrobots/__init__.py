@@ -18,5 +18,6 @@ limitations under the License.
 
 """
 
+from .den_hart import *
 from .eigen import *
 from .rotations import *
