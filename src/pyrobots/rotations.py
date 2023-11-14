@@ -120,6 +120,8 @@ def inverse_rot_mat(
             + (R[1, 0] - R[0, 1]) ** 2
         )
     )
+    if np.isclose(s, 0):
+        print("[WARNING] we are in a singularity case")
     theta1, theta2 = np.arctan2(2 * s, np.trace(R) - 1), np.arctan2(
         -2 * s, np.trace(R) - 1
     )
@@ -171,6 +173,47 @@ def inverse_rot_mat(
         )
 
         return (theta1, theta2), (r1, r2)
+    
+def direct_euler(
+    phi: float, theta: float, psi: float, order: str) -> np.ndarray:
+    """
+    This function returns a rotation matrix for a given Euler angles.
+
+    Parameters
+    ----------
+    phi : float
+        angle of first rotation in radians.
+    theta : float
+        angle of second rotation in radians.
+    psi : float
+        angle of third rotation in radians.
+    order : str, optional
+        order of rotations, by default "xyz"
+
+    Returns
+    -------
+    np.ndarray
+        Rotation matrix.
+    """
+    
+    assert phi is not None, "Phi cannot be None"
+    assert theta is not None, "Theta cannot be None"
+    assert psi is not None, "Psi cannot be None"
+
+    #obtain for order string the single letters
+    order = order.lower()
+    assert len(order) == 3, "Order must be a string of length 3"
+    assert order[0] in ["x", "y", "z"], "Not a valid order"
+    assert order[1] in ["x", "y", "z"], "Not a valid order"
+    assert order[2] in ["x", "y", "z"], "Not a valid order"
+
+    #create the rotation matrices
+    dict={"x":np.array([1,0,0]), "y":np.array([0,1,0]), "z":np.array([0,0,1])}
+    R1 = direct_rot_mat(phi, dict[order[0]])
+    R2 = direct_rot_mat(theta, dict[order[1]])
+    R3 = direct_rot_mat(psi, dict[order[2]])
+
+    return R3 @ R2 @ R1
 
 
 def direct_rpy_separate(

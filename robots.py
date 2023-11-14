@@ -102,6 +102,11 @@ def format_known_or(x: floating[Any] | None) -> str:
         np.pi / 4: "π/4",
         np.pi / 3: "π/3",
         np.sqrt(2): "√2",
+        np.sqrt(2) / 2: "√2/2",
+        np.sqrt(3) / 2: "√3/2",
+        np.sqrt(3) / 3: "√3/3",
+        np.sqrt(3) / 4: "√3/4",
+        1/ 2*np.sqrt(2): "1/2√2",
         1 / np.sqrt(2): "1/√2",
         np.sqrt(3): "√3",
         1 / np.sqrt(3): "1/√3",
@@ -258,7 +263,7 @@ def rotation_direct(
     R = pr.rotations.direct_rot_mat(parsed_theta, parsed_axis)
     R_str: str = fmt_foo(R)
     print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_str}")
-
+    return R
 
 @app.command()
 def rotation_inverse(
