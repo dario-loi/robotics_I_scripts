@@ -36,7 +36,7 @@ def mat_dh_symbolic(table: np.array):
     T = np.eye(4)
 
     # iterate through rows of table
-    for i in range(4):
+    for i in range(table.shape[0]):
         a, alpha, d, theta = table[i, :]
 
         def convert(x):
