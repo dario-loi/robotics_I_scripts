@@ -3,10 +3,8 @@
 %date: 2019-10-15
 
 \documentclass[11pt]{article}
-
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-
 \usepackage{amsmath}
 \usepackage{hyperref}
 \hypersetup{
@@ -15,14 +13,104 @@
   urlcolor=black
   }
 \usepackage{cleveref}
-
 \DeclareMathOperator{\atan2}{atan2}
 
 \begin{document}
 \title{Robotics 1 \\ Exercise Solver}
 \maketitle
+
 \tableofcontents
 \clearpage
+\section{DC motors}\label{sec:dc_motors}
+\subsection{Electrical and mechanical balance}
+\begin{align}
+&V_a(t) = R_ai_a(t) + L_a\frac{di_a(t)}{dt} + v_{emf}(t)\\
+&v_{emf}(t) = k_v\omega(t)
+\end{align}
+in control domain:
+\begin{align}
+ &V_a= (R_a + sL_a)I_a+ V_{emf}\\
+    &V_{emf} = k_v\omega
+\end{align}
+where $V_a$ is the voltage applied to the motor, $R_a$ is the armature 
+resistance, $L_a$ is the armature inductance, $i_a$ is the armature 
+current, $v_{emf}$ is the back emf, $k_v$ is the back emf constant
+ and $\omega$ is the angular velocity of the motor.
+\begin{align}
+    &\tau_m(t) = I_m(t)\frac{d\omega(t)}{dt} + F_m\omega(t)+ \tau_{load}(t)\\
+    &\tau_m(t) = k_t i_a(t)
+\end{align}
+in control domain:
+\begin{align}
+    &T_m= (sI_m + F_m)\omega + T_{load}\\
+    &T_m = k_t I_a
+\end{align}
+where $\tau_m$ is the motor torque, $I_m$ is the motor inertia,
+ $F_m$ is the motor friction, $\tau_{load}$ is the load torque
+  and $k_t$ is the torque constant.
+\textbf{Note: $k_v = k_t$ numerically!}
+\subsection{Reduction ratio}
+The reduction ratio of a the ransmission chain is the product of the
+ reduction ratios of the single elements of the chain:
+\begin{equation}
+    \eta = \sum_{i=1}^n \eta_i
+\end{equation}
+\subsubsection{Harmonic drives}
+\begin{align}
+    &\eta  = \frac{\#theet_{FS}}{\#theet_{CS}-\#theet_{FS}} = \frac{\#theet_{FS}}{2}\\
+    &\#theet_{FS} = \#theet_{CS} - 2
+\end{align}
+\subsubsection{Standard gears}
+Given two gears of radius $r_1$ and $r_2$ the reduction ratio is:
+\begin{equation}
+    \eta = \frac{r_2}{r_1}
+\end{equation}
+\subsection{Optimal reduction ratio}
+\begin{equation}
+    \eta_{opt} = \sqrt{\frac{J_{load}}{J_{motor}}}
+\end{equation}
+\subsection{Optimal torque}
+We impose the relation between the angular acceleration 
+of the load and the motor:
+\begin{equation}
+    \dot{\dot{\theta_{m}}} = \eta\dot{\dot{\theta_{l}}}
+\end{equation}
+\begin{equation}
+    \tau_{m} = J_{m}*\dot{\dot{\theta_m}} +\frac{1}{\eta}(J_{l}*\dot{\dot{\theta_l}})
+\end{equation}
+\section{Encoders}\label{sec:encoders}
+\subsection{Absolute encoders}
+The resolution of an absolute encoder is given by:
+\begin{equation}
+    res = \frac{2\pi}{2^{N_t}}
+\end{equation}
+where $N_t$ is the number of bits of the encoder.
+\textbf{Note: the resolution changes from base to link end!}
+\begin{equation}
+    res_{base} = res_{link}/L
+\end{equation}
+where L is the length of the link.
+\subsection{Incremental encoders}
+The resolution of an incremental encoder is given by:
+\begin{equation}
+    rse = \frac{2\pi}{2^{N_t}}
+\end{equation}
+The number of bit of the encoder is given by:
+\begin{equation}
+    N_t = \log_2(N_p)
+\end{equation}
+where $N_p$ is the number of pulses per turn of the encoder.
+\subsection{Multi-turn encoders}
+The number of bits to count the turns in a multi-turn encoder is given by:
+\begin{equation}
+    N_t = \log_2(N_{turns})
+\end{equation}
+where $N_{turns}$ is the number of turns of the encoder.
+The number of turns of the encoder is given by:
+\begin{equation}
+    N_{turns} = \frac{\Delta\theta_{max}*n_r}{2\pi}
+\end{equation}
+where $\delta\theta_{max}$ is the maximum angle of the encoder and $n_r$ is the reduction ratio.
 \section{Rotation Matrices}\label{sec:rotation}
 \subsection{Check if R is a rotation matrix}\label{sec:check_rotation}
 To check if R is a rotation matrix we have to check:
@@ -31,6 +119,15 @@ To check if R is a rotation matrix we have to check:
 \item Orthogonality: $R^TR = I$
 \item Normality: for each column $R_i$ of R, $||R_i|| = 1$
 \end{itemize}
+\subsection{General Rotation}
+\begin{equation}
+^{A}R_B = \begin{bmatrix}
+x_A  x_B & y_A x_B & z_A x_B \\
+x_A  y_B & y_A y_B & z_A y_B \\
+x_A  z_B & y_A z_B & z_A z_B
+\end{bmatrix}
+\end{equation}
+
 \subsection{Rotation direct problem}
 To find R from $\theta$ and \textbf{r} we use the Rodrigues' rotation formula:
 \begin{equation}
@@ -48,18 +145,18 @@ r_3 & 0 & -r_1 \\
 To find $\theta$ and \textbf{r} from R we fisrt check if there is
 a singularity:
 \begin{equation}
-\sin(\theta) = \frac{1}{2}\left(\sqrt{(R_{32}-R_{23})^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\right)
+\sin(\theta) = \frac{1}{2}\left(\sqrt{(R_{23}-R_{32})^2+(R_{13}-R_{31})^2+(R_{12}-R_{21})^2}\right)
 \end{equation}
-\subsubsection{Singularity (hence $\sin(\theta) = 0$)}
+\subsubsection{singularity (hence $\sin(\theta) = 0$)}
 If it is a singularity we can find \textbf{r} and $\theta$:
 if $\theta$ is 0: there is no solution for r.
 if $\theta$ is $\pm\pi$:\\
-we set $\sin(\theta) = 0$, $\cos(\theta) = -1$ and we find \textbf{r}:
+we set $sin(\theta) = 0$, $\cos(\theta) = -1$ and we find \textbf{r}:
 \begin{equation}
-\textbf{r} = \frac{1}{2}\begin{bmatrix}
-\pm \sqrt{R_{11}+1} \\
-\pm \sqrt{R_{22}+1} \\
-\pm \sqrt{R_{33}+1}
+\textbf{r} = \begin{bmatrix}
+\pm \sqrt{\frac{R_{11}+1}{2}} \\
+\pm \sqrt{\frac{R_{22}+1}{2}} \\
+\pm \sqrt{\frac{R_{33}+1}{2}}
 \end{bmatrix}
 \end{equation}
 To decide the signs of the elements of \textbf{r} we can use the following criteria:
@@ -68,13 +165,13 @@ To decide the signs of the elements of \textbf{r} we can use the following crite
 \item $r_x r_z = R_{13}/2$
 \item $r_y r_z = R_{23}/2$
 \end{itemize}
-\subsubsection{Not singularity}
-If the singularity is not present we can find $\theta$ and \textbf{r}:\\
+\subsubsection{not singularity}
+If the singularity is not present we can find theta and \textbf{r}:\\
 \textbf{Note: we obtain two solutions for $\theta$ and cosequently r}
 \begin{align}
 \cos(\theta) &= \left(R_{11}+R_{22}+R_{33}-1\right)\\
-\sin(\theta) &= \pm\sqrt{{(R_{32}-R_{23})}^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\\
-\theta &= \atan2\left(\sin\theta,\cos\theta\right) \in \left(-\pi,\pi\right]
+\sin(\theta) &= \pm\sqrt{(R_{32}-R_{23})^2+(R_{13}-R_{31})^2+(R_{21}-R_{12})^2}\\
+\theta &= \atan2\left(\sin\theta,\cos\theta\right) \in (-\pi,\pi]
 \end{align}
 \begin{equation}
 \textbf{r} = \frac{1}{2\sin(\theta)}\begin{bmatrix}
@@ -83,14 +180,32 @@ R_{13}-R_{31} \\
 R_{21}-R_{12}
 \end{bmatrix}
 \end{equation}
-
+\section{Euler}
+\subsection{Euler direct problem}
+To find R from $\phi$, $\theta$ and $\psi$ around axis X,Y,Z we use the 
+following formula:
+\begin{equation}
+R(\phi,\theta,\psi) = R_x(\phi)R_y(\theta)R_z(\psi)
+\end{equation}
+\subsection{Inverse Problem}
+Given a rotation matrix R we can find $\phi$, $\theta$ and $\psi$:
+Fisrt check if there is a singularity (if $\theta = 0$ or $\pm \pi$).
+\subsubsection{singularity (hence $R_{13}^2+R_{23}^2=0$)}
+If it is a singularity we can find $\phi+\psi$ and $\phi-\psi$
+\subsection{not singularity}
+If it is not a singularity we can find $\phi$, $\theta$ and $\psi$:
+\begin{align}
+\theta &= \atan2\left(\pm\sqrt{R_{13}^2+R_{23}^2},R_{33}\right)\\
+\phi &= \atan2\left(R_{13}/\sin(\theta),-R_{23}/\sin(\theta)\right)\\
+\psi &= \atan2\left(R_{31}/\sin(\theta),R_{32}/\sin(\theta)\right)
+\end{align}
 \section{Roll Pitch Yawn}\label{sec:rpy}
 \subsection{RPY direct problem}
 To find R from $\psi$, $\theta$ and $\phi$ we use the following formula:
 \begin{equation}
 R(\psi,\theta,\phi) = R_z(\phi)R_y(\theta)R_x(\psi)
 \end{equation}
-\textbf{Note: the order of the angles is reversed!}
+\textbf{Note: the order of the angle is reversed!}
 \subsection{Inverse Problem}
 Given a rotation matrix $R$ we can find angles of rotation $\psi$, $\theta$ and $\phi$:
 Fisrt we check if there is a singularity (if $R_{32}^2+R_{33}^2 = 0$), we then have
@@ -113,10 +228,8 @@ two cases:
       \end{cases}
   \end{equation}
 \end{itemize}
-
-
 \section{DH frames}
-\subsection{Axis assignment}
+\subsection{Assign axis}
 \begin{itemize}
 \item \textbf{$z_i$} along the direction of joint i+1.
 \item \textbf{$x_i$} along the common normal between $z_i$ and $z_{i-1}$.
@@ -141,7 +254,7 @@ two cases:
 \subsection{DH parameters from transformation matrix}
 First we have to check that the first three by three submatrix is
  a rotation matrix
-  \hyperref[sec:check_rotation]{(see \cref{sec:check_rotation})}.\\
+  \hyperref[sec:check_rotation]{(see section \ref{sec:check_rotation})}.\\
 Then we can find the parameters:
 \begin{align}
 \theta_i &= \atan2\left(R_{12},R_{11}\right)\\
@@ -161,10 +274,10 @@ r_2 = l_1 + l_2
 \subsection{3-DOF robot}
 The primary workspace is defined by two concentric spheres of radius $r_{in}$ and $r_{out}$ where:
 \begin{equation}
-r_{in}= l_{min}+l_{med}+l_{max}
+r_{out}= l_{min}+l_{med}+l_{max}
 \end{equation}
 \begin{equation}
-r_{out} = \max(0,l_{max}- l_{med} -l_{min})
+r_{in} = \max(0,l_{max}- l_{med} -l_{min})
 \end{equation}
 where:
 \begin{itemize}
@@ -172,4 +285,46 @@ where:
 \item $l_{med}$ is the length of the medium link
 \item $l_{max}$ is the length of the longest link
 \end{itemize}
+\section{Inverse Kinematic}
+\subsection{Trigonometry}
+\begin{align}
+    \cos(\theta+\phi) = \cos(\theta)\cos(\phi)-\sin(\theta)\sin(\phi) \\
+    \sin(\theta+\phi) = \sin(\theta)\cos(\phi)+\cos(\theta)\sin(\phi)
+\end{align}
+\subsection{algebraic transformation}
+if we have a system of the form:
+\begin{align}
+    a\cos(\theta)+b\sin(\theta) = c 
+\end{align}
+we can transform it in a system of the form:
+\begin{align}
+    u_{12} &=\frac{a \pm \sqrt{a^2+b^2-c^2}}{b+c}\\
+    \theta_{12} &= \atan2(u_{12})
+\end{align}
+\textbf{Note: we have to check that $a^2+b^2-c^2 \geq 0$}
+\subsection{algebraic solution}
+Rewrite a system of equations in the form:
+\begin{equation}
+    \begin{bmatrix}
+    a_{11} & a_{12} \\
+    a_{21} & a_{22}
+    \end{bmatrix}
+    \begin{bmatrix}
+    c_1 \\
+    s_1
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+    b_1 \\
+    b_2
+    \end{bmatrix}
+\end{equation}
+and obtain the solution:
+\begin{align}
+    det &=(a_{11}a_{22}-a_{12}a_{21})\\
+    c_1 &= \frac{a_{11}b_1+a_{21}b_2}{det} \\
+    s_1 &= \frac{a_{12}b_1+a_{22}b_2}{det}
+\end{align}
+\textbf{Note: we have to check that $det \neq 0$}
 \end{document}
+
