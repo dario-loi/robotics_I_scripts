@@ -37,11 +37,10 @@ def mat_dh_symbolic(table: np.array):
 
     # iterate through rows of table
     for i in range(4):
-        a, alpha, d, theta = table[:, i]
+        a, alpha, d, theta = table[i, :]
 
         def convert(x):
             if x.isnumeric():
-                print(x, "is numeric")
                 return float(x)
             else:
                 try:
@@ -114,7 +113,7 @@ def mat_dh_numeric(table: np.array):
     # iterate through rows of table
     for i in range(4):
         # create transformation matrix for each row
-        a, alpha, d, theta = table[:, i]
+        a, alpha, d, theta = table[i, :]
         T_i = np.array(
             [
                 [
