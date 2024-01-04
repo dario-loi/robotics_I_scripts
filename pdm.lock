@@ -3,9 +3,10 @@
 
 [metadata]
 groups = ["default", "dev"]
-strategy = ["cross_platform"]
-lock_version = "4.4"
-content_hash = "sha256:9ba52530ffbd0327f6a4f481ab70a1f691f73589c409649cd5d75d338eca7017"
+cross_platform = true
+static_urls = false
+lock_version = "4.3"
+content_hash = "sha256:7f2f1d85f5b679ba62258ae40a5aaeb6ee13616e8368b2c104d25f0741f22f73"
 
 [[package]]
 name = "appnope"
@@ -333,20 +334,6 @@ files = [
     {file = "fonttools-4.44.0-cp312-cp312-win_amd64.whl", hash = "sha256:58af428746fa73a2edcbf26aff33ac4ef3c11c8d75bb200eaea2f7e888d2de4e"},
     {file = "fonttools-4.44.0-py3-none-any.whl", hash = "sha256:b9beb0fa6ff3ea808ad4a6962d68ac0f140ddab080957b20d9e268e4d67fb335"},
     {file = "fonttools-4.44.0.tar.gz", hash = "sha256:4e90dd81b6e0d97ebfe52c0d12a17a9ef7f305d6bfbb93081265057d6092f252"},
-]
-
-[[package]]
-name = "hypothesis"
-version = "6.87.4"
-requires_python = ">=3.8"
-summary = "A library for property-based testing"
-dependencies = [
-    "attrs>=19.2.0",
-    "sortedcontainers<3.0.0,>=2.1.0",
-]
-files = [
-    {file = "hypothesis-6.87.4-py3-none-any.whl", hash = "sha256:0526d5bb45fd82b3ddc7d16ab04897652725cea938b62fff78bfd945dfc9775f"},
-    {file = "hypothesis-6.87.4.tar.gz", hash = "sha256:c508779be66e266c45dbf9c1b2713e560dfd89abb044d92eafe91e8b2728af01"},
 ]
 
 [[package]]
@@ -1078,15 +1065,6 @@ summary = "Python 2 and 3 compatibility utilities"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
-
-[[package]]
-name = "sortedcontainers"
-version = "2.4.0"
-summary = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
-files = [
-    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
-    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
 
 [[package]]
