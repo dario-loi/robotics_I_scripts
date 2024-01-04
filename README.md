@@ -1,14 +1,11 @@
-
-
 # Robotics I Utilities
 
 This repository contains a collection of utilities for the Robotics I exam at the AI & Robotics master's degree at Sapienza University of Rome.
 
-Table of Contents
-=================
+## Table of Contents
 
 - [Robotics I Utilities](#robotics-i-utilities)
-- [Table of Contents](#table-of-contents)
+  - [Table of Contents](#table-of-contents)
   - [What's inside](#whats-inside)
   - [Installation](#installation)
   - [Usage](#usage)
@@ -22,7 +19,7 @@ Table of Contents
 ## What's inside
 
 - `robots.py` (also aliased as `robots`), a CLI tool for solving common kinematic problems. It is a wrapper around the `pyrobots` package that allows you to quickly solve problems without having to write any code. Most of the commands accept math expressions as input, so you can use it as a calculator as well. (e.g. `./robots rotation-direct "2 * pi + pi/4" "x"` performs a rotation of 2π + π/4 radians around the x axis)
-- `pyrobots` - A Python package containing the utilities as functions and classes. The functions perform direct and inverse derivation for common kinematic problems that come up during the exam.  Can't find the right command in `robots`? import this package in a notebook and write your own code!
+- `pyrobots` - A Python package containing the utilities as functions and classes. The functions perform direct and inverse derivation for common kinematic problems that come up during the exam. Can't find the right command in `robots`? import this package in a notebook and write your own code!
 
 ## Installation
 

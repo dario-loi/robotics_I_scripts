@@ -22,14 +22,14 @@ limitations under the License.
 
 from enum import Enum
 from fractions import Fraction
-from typing import Annotated, Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Annotated, Any, Tuple, Union
 
 import numpy as np
 import typer
 from numpy import floating
 from rich import print
 from rich.prompt import Prompt
-from sympy import Matrix, nsimplify, sympify
+from sympy import Matrix, sympify
 
 import pyrobots as pr
 
@@ -56,8 +56,8 @@ def eval_expr(expr: Expression) -> float:
     try:
         val: float = float(sympify(expr))
         return val
-    except:
-        raise typer.BadParameter("Provided input is not a valid expression.")
+    except Exception:
+        raise typer.BadParameter("Provided input is not a valid expression.") from None
 
 
 def parse_axis(axis_str: Axis) -> np.ndarray:
@@ -73,7 +73,9 @@ def parse_axis(axis_str: Axis) -> np.ndarray:
                 values = Matrix(sympify(axis_str))
                 return np.array(values).astype(np.float64)
             except ValueError:
-                raise typer.BadParameter("Provided input is not a valid axis.")
+                raise typer.BadParameter(
+                    "Provided input is not a valid axis."
+                ) from None
 
 
 def parse_ndarray(input_str: NDarray) -> np.ndarray:
@@ -81,7 +83,7 @@ def parse_ndarray(input_str: NDarray) -> np.ndarray:
         values = Matrix(sympify(input_str))
         return np.array(values).astype(np.float64)
     except ValueError:
-        raise typer.BadParameter("Provided input is not a valid ndarray.")
+        raise typer.BadParameter("Provided input is not a valid ndarray.") from None
 
 
 def format_known_or(x: floating[Any] | None) -> str:
@@ -106,7 +108,7 @@ def format_known_or(x: floating[Any] | None) -> str:
         np.sqrt(3) / 2: "√3/2",
         np.sqrt(3) / 3: "√3/3",
         np.sqrt(3) / 4: "√3/4",
-        1/ 2*np.sqrt(2): "1/2√2",
+        1 / 2 * np.sqrt(2): "1/2√2",
         1 / np.sqrt(2): "1/√2",
         np.sqrt(3): "√3",
         1 / np.sqrt(3): "1/√3",
@@ -192,7 +194,8 @@ def rotation_interactive(
 
     assert not (fract and round), "Cannot round and simplify at the same time"
 
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
 
     match problem_type:
         case RotProblemType.DIRECT:
@@ -259,11 +262,15 @@ def rotation_direct(
 
     parsed_axis: np.ndarray = parse_axis(axis)
     parsed_theta: float = eval_expr(theta)
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
+
     R = pr.rotations.direct_rot_mat(parsed_theta, parsed_axis)
     R_str: str = fmt_foo(R)
     print(f":arrows_counterclockwise: Direct Rotation Matrix:\n{R_str}")
     return R
+
 
 @app.command()
 def rotation_inverse(
@@ -297,7 +304,10 @@ def rotation_inverse(
 
     parsed_R: np.ndarray = parse_ndarray(r_matrix)
     thetas, axes = pr.rotations.inverse_rot_mat(parsed_R)
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
+
     print(
         f"Inverse Rotation:\n\t:triangular_ruler: theta(s) = {fmt_foo(thetas)}\n\t:straight_ruler: axis = {fmt_foo(axes)}"
     )
@@ -349,7 +359,8 @@ def rpy_direct(
 
     assert not (fract and round), "Cannot round and simplify at the same time"
 
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
 
     if separate:
         R_roll, R_pitch, R_yaw = pr.rotations.direct_rpy_separate(
@@ -360,7 +371,7 @@ def rpy_direct(
         pitch_fmt: str = fmt_foo(R_pitch)
         yaw_fmt: str = fmt_foo(R_yaw)
         print("-" * SEP_LENGTH)
-        print(f"Direct Rotation Matrix:")
+        print("Direct Rotation Matrix:")
         print(f":arrow_lower_right: Roll:\n{roll_fmt}")
         print(f":arrow_lower_left: Pitch:\n{pitch_fmt}")
         print(f":arrow_up: Yaw:\n{yaw_fmt}")
@@ -405,26 +416,27 @@ def rpy_inverse(
 
     roll, pitch, yaw, sing = pr.rotations.inverse_rpy(parsed_R)
 
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
 
     if not sing:
         print("-" * SEP_LENGTH)
-        print(f"Rotation angles")
+        print("Rotation angles")
         print(f":arrow_lower_right: roll: {fmt_foo(roll)}")
         print(f":arrow_lower_left: pitch: {fmt_foo(pitch)}")
         print(f":arrow_up: yaw: {fmt_foo(yaw)}")
     elif sing == pr.rotations.RPY_RES.SUM:
         print("-" * SEP_LENGTH)
-        print(f":bangbang: Singularity :bangbang:")
-        print(f"Rotation angles:")
+        print(":bangbang: Singularity :bangbang:")
+        print("Rotation angles:")
         print(f"\t:arrow_lower_right: roll: {fmt_foo(roll)}")
         print(f"\t:arrow_lower_left: pitch: {fmt_foo(pitch)}")
         print(f"\t:arrow_up: yaw: {fmt_foo(yaw)}")
         print(f"\tunder constraint yaw + roll: {fmt_foo(yaw + roll)}")
     elif sing == pr.rotations.RPY_RES.SUB:
         print("-" * SEP_LENGTH)
-        print(f":bangbang: Singularity :bangbang:")
-        print(f"Rotation angles:")
+        print(":bangbang: Singularity :bangbang:")
+        print("Rotation angles:")
         print(f"\t:arrow_lower_right: roll: {fmt_foo(roll)}")
         print(f"\t:arrow_lower_left: pitch: {fmt_foo(pitch)}")
         print(f"\t:arrow_up: yaw: {fmt_foo(yaw)}")
@@ -464,7 +476,8 @@ def real_eigen(
 
     assert not (fract and round), "Cannot round and simplify at the same time"
 
-    fmt_foo = lambda arr: fmt_array(arr, fract, round)
+    def fmt_foo(arr):
+        return fmt_array(arr, fract, round)
 
     print("-" * SEP_LENGTH)
     print(f"There are {eigvals.shape[0]} eigenvalue(s):")
@@ -481,7 +494,10 @@ def simplify(
     Simplify the values in a matrix
     """
     parsed_matrix = parse_ndarray(matrix)
-    fmt_foo = lambda arr: fmt_array(arr, True, False)
+
+    def fmt_foo(arr):
+        return fmt_array(arr, True, False)
+
     R_fmt: str = fmt_foo(parsed_matrix)
 
     print("-" * SEP_LENGTH)
@@ -496,7 +512,10 @@ def round(
     Round the values in a matrix to 4 decimal places
     """
     parsed_matrix = parse_ndarray(matrix)
-    fmt_foo = lambda arr: fmt_array(arr, False, True)
+
+    def fmt_foo(arr):
+        return fmt_array(arr, False, True)
+
     R_fmt: str = fmt_foo(parsed_matrix)
 
     print("-" * SEP_LENGTH)

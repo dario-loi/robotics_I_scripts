@@ -2,31 +2,27 @@
 name = "pyrobots"
 version = "0.1.0"
 description = "A series of helpful routines for the Sapienza Robotics exam A.Y 2023-2024"
-authors = [
-    {name = "dario-loi", email = "loi.1940849@studenti.uniroma1.it"},
-]
+authors = [{ name = "dario-loi", email = "loi.1940849@studenti.uniroma1.it" }]
 dependencies = [
-    "typer[all]>=0.9.0",
-    "numpy>=1.25.2",
-    "pytest>=7.4.2",
-    "black>=23.9.1",
-    "mypy>=1.6.0",
-    "sympy>=1.12",
-    "pytest-cov>=4.1.0",
-    "pytest-mypy>=0.10.3",
-    "pytest-black>=0.3.12",
-    "pre-commit>=3.5.0",
-    "matplotlib>=3.8.1",
+  "typer[all]>=0.9.0",
+  "numpy>=1.25.2",
+  "pytest>=7.4.2",
+  "black>=23.9.1",
+  "mypy>=1.6.0",
+  "sympy>=1.12",
+  "pytest-cov>=4.1.0",
+  "pytest-mypy>=0.10.3",
+  "pytest-black>=0.3.12",
+  "pre-commit>=3.5.0",
+  "matplotlib>=3.8.1",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
-license = {text = "Apache-2.0 License", file = "LICENSE"}
+license = { text = "Apache-2.0 License", file = "LICENSE" }
 
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm.dev-dependencies]
-dev = [
-    "ipykernel>=6.25.2",
-]
+dev = ["ipykernel>=6.25.2"]

@@ -18,7 +18,6 @@ limitations under the License.
 
 """
 
-from typing import Optional, Tuple, Type, Union
 
 import numpy as np
 import pytest
@@ -44,7 +43,7 @@ def test_direct() -> None:
 
 def test_inverse() -> None:
     assert rot.inverse_rot_mat(np.eye(3))[0] == 0
-    assert rot.inverse_rot_mat(np.eye(3))[1] == None
+    assert rot.inverse_rot_mat(np.eye(3))[1] is None
 
     # Accessing the first element of the tuple should return the angle, which should have two values
     # we check that the second value is pi
@@ -87,7 +86,7 @@ def test_compose_should_be_identity() -> None:
     theta, axis = rot.inverse_rot_mat(R)
 
     assert np.isclose(theta, 0), "theta should be 0"
-    assert axis == None, "axis should be None"
+    assert axis is None, "axis should be None"
 
 
 if __name__ == "__main__":
@@ -194,7 +193,7 @@ def test_rpy_separate_equal_to_direct() -> None:
     assert np.isclose(pitch, 0), "Pitch should be 0"
     assert np.isclose(yaw, 0), "Yaw should be 0"
 
-    assert ambiguity == None, "There should be no ambiguity"
+    assert ambiguity is None, "There should be no ambiguity"
     assert np.allclose(roll, angle), "Roll should be equal to angle"
 
 
@@ -202,7 +201,7 @@ def test_rpy_singularity() -> None:
     R = rot.direct_rpy(1, np.pi / 2, 1)
     roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
 
-    assert ambiguity == RPY_RES.SUB, f"There should be a subtractive ambiguity"
+    assert ambiguity == RPY_RES.SUB, "There should be a subtractive ambiguity"
     assert np.isclose(roll - yaw, 0), f"Roll - Yaw should be 0, not {roll - yaw}"
     assert np.isclose(pitch, np.pi / 2), f"Pitch should be pi/2, not {pitch}"
 
@@ -210,7 +209,7 @@ def test_rpy_singularity() -> None:
 
     roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
 
-    assert ambiguity == RPY_RES.SUM, f"There should be an additive ambiguity"
+    assert ambiguity == RPY_RES.SUM, "There should be an additive ambiguity"
     assert np.isclose(roll + yaw, 2), f"Roll + Yaw should be 2, not {roll + yaw}"
     assert np.isclose(pitch, -np.pi / 2), f"Pitch should be -pi/2, not {pitch}"
 
@@ -219,7 +218,7 @@ def test_roll_pitch_yaw_inverse() -> None:
     R = rot.direct_rpy(np.pi / 4, np.pi / 4, np.pi / 4)
     roll, pitch, yaw, ambiguity = rot.inverse_rpy(R)
 
-    assert ambiguity == None, "There should be no ambiguity"
+    assert ambiguity is None, "There should be no ambiguity"
 
     print(roll, pitch, yaw)
 

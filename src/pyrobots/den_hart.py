@@ -1,16 +1,11 @@
-from enum import Enum
-from typing import Optional, Tuple, Type, Union
-
 import numpy as np
 from sympy import (
     Matrix,
     cos,
     nsimplify,
-    pi,
     pprint,
     simplify,
     sin,
-    solve,
     symbols,
     sympify,
     trigsimp,
@@ -50,7 +45,7 @@ def mat_dh_symbolic(table: np.array):
                         return 0
                     else:
                         return n
-                except:
+                except TypeError:
                     return symbols(x)
 
         a = convert(a)

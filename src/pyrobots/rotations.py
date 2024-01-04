@@ -23,10 +23,10 @@ limitations under the License.
 """
 
 from enum import Enum
-from typing import Optional, Tuple, Type, Union
+from typing import Optional, Tuple, Type
 
 import numpy as np
-from sympy import Matrix, cos, sin, symbols
+from sympy import Matrix, cos, nsolve, sin, symbols
 
 
 def direct_rot_mat(theta: float, axis: np.ndarray) -> np.ndarray:
@@ -109,7 +109,7 @@ def inverse_rot_mat(
     ), f"R must be a rotation matrix (orthonomal with determinant 1), determinant is {np.linalg.det(R)}"
     assert np.allclose(
         np.dot(R.T, R), np.eye(3)
-    ), f"R must be a rotation matrix (orthonomal with determinant 1), R^T @ R != I"
+    ), "R must be a rotation matrix (orthonomal with determinant 1), R^T @ R != I"
 
     s = (
         1
@@ -173,9 +173,9 @@ def inverse_rot_mat(
         )
 
         return (theta1, theta2), (r1, r2)
-    
-def direct_euler(
-    phi: float, theta: float, psi: float, order: str) -> np.ndarray:
+
+
+def direct_euler(phi: float, theta: float, psi: float, order: str) -> np.ndarray:
     """
     This function returns a rotation matrix for a given Euler angles.
 
@@ -195,20 +195,24 @@ def direct_euler(
     np.ndarray
         Rotation matrix.
     """
-    
+
     assert phi is not None, "Phi cannot be None"
     assert theta is not None, "Theta cannot be None"
     assert psi is not None, "Psi cannot be None"
 
-    #obtain for order string the single letters
+    # obtain for order string the single letters
     order = order.lower()
     assert len(order) == 3, "Order must be a string of length 3"
     assert order[0] in ["x", "y", "z"], "Not a valid order"
     assert order[1] in ["x", "y", "z"], "Not a valid order"
     assert order[2] in ["x", "y", "z"], "Not a valid order"
 
-    #create the rotation matrices
-    dict={"x":np.array([1,0,0]), "y":np.array([0,1,0]), "z":np.array([0,0,1])}
+    # create the rotation matrices
+    dict = {
+        "x": np.array([1, 0, 0]),
+        "y": np.array([0, 1, 0]),
+        "z": np.array([0, 0, 1]),
+    }
     R1 = direct_rot_mat(phi, dict[order[0]])
     R2 = direct_rot_mat(theta, dict[order[1]])
     R3 = direct_rot_mat(psi, dict[order[2]])
@@ -338,7 +342,7 @@ def inverse_rpy(
 
             return roll, pitch, yaw, RPY_RES.SUM
         else:
-            assert False, "Singularity case unhandled"
+            raise AssertionError("Singularity case unhandled")
 
     if not np.isclose(ctetsq, 0, atol=1e-12):
         cos1 = np.cos(pitch1)
@@ -421,7 +425,7 @@ def gen_mat(axis: AXIS, i: int = 0, use_greek_symbols: bool = True) -> Matrix:
         else:
             return gen_yaw(f"yaw_{i}")
     else:
-        assert False, "Invalid axis"
+        raise AssertionError("Invalid axis")
 
 
 def get_symbols(
@@ -449,7 +453,7 @@ def get_symbols(
                 else:
                     symbols.append(f"yaw_{i}")
             case _:
-                assert False, "Invalid axis"
+                raise AssertionError("Invalid axis")
     return symbols
 
 
@@ -506,10 +510,11 @@ def inverse_generic(
             equations.append(R_sym[i, j] - R[i, j])
 
     try:
+        roll, pitch, yaw = symbols("phi_0 theta_1 psi_2")
         solutions = nsolve(
             equations, (roll, pitch, yaw), (0, 0, 0), dict=True
         )  # Solve the equations
-    except:
+    except Exception:
         return None  # Singularity!
 
     assert solutions is not None, "[BUG] Solutions should not be None"
